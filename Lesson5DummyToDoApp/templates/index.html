@@ -5,10 +5,16 @@
     <title>Nick's Todo App</title>
   </head>
   <body>
+    <h1>Todos:</h1>
     <ul>
       {% for d in data %}
       <li>{{ d.description }}</li>
       {% endfor %}
     </ul>
+    <h2>Add a todo</h2>
+    <form action="/create" method="post">
+      <label for="newtodo">Add your todo here:</label><br>
+      <input type="text" id="newtodo" name="newtodo"><br>
+    </form>
   </body>
 </html>
