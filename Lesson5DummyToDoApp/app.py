@@ -21,9 +21,9 @@ def index():
     return render_template('index.html', data=Todo.query.all())
 
 @app.route('/todo/create', methods=['POST'])
-def create():
-    new_todo = request.form['newtodo']
-    NewTodo = Todo(description=new_todo)
+def create_todo():
+    new_todo_description = request.form.get('newtodo', '')
+    NewTodo = Todo(description=new_todo_description)
     db.session.add(NewTodo)
     db.session.commit()
     return redirect(url_for('index'))
