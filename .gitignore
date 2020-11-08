@@ -1,0 +1,14 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
