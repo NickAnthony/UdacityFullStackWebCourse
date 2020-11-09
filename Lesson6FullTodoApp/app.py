@@ -38,6 +38,32 @@ def create_todo():
     if not error_occured:
         return jsonify(body)
 
+
+@app.route('/todos/<todo_id>/set-completed', methods=['POST'])
+def set_completed_todo(todo_id):
+    new_completed_state = request.get_json()['completed']
+    error_occured = False
+    body = {}
+    try:
+        todo = Todo.query.filter_by(id=todo_id).first()
+        if not todo:
+            error_occured = True
+            raise Exception("Todo with id %s not found in the DB" % todo_id)
+        todo.completed = new_completed_state
+        db.session.commit()
+        body['id'] = todo.description
+        body['description'] = todo.description
+    except:
+        db.session.rollback()
+        error_occured = True
+        print(sys.exec_info())
+    finally:
+        db.session.close()
+    if not error_occured:
+        return jsonify(body)
+    return redirect(url_for('index'))
+
+
 @app.route('/')
 def index():
-    return render_template('index.html', data=Todo.query.all())
+    return render_template('index.html', data=Todo.query.order_by('id').all())
