@@ -11,6 +11,22 @@
         list-style: none;
         padding: 0;
         margin: 0;
+        width: 200px;
+      }
+      li {
+        clear: both;
+      }
+      button {
+        display: inline;
+        background:none;
+        border:none;
+        margin:0;
+        margin-left: 5px;
+        padding:0;
+        cursor: pointer;
+        color: red;
+        float: right;
+        font-size: 20px;
       }
     </style>
   </head>
@@ -30,10 +46,27 @@
                {% if d.completed %} checked {% endif %}
                data-id="{{ d.id }}" />
         {{ d.description }}
+        <button class="button-delete" data-id="{{ d.id }}">
+          &cross;
+        </button>
       </li>
+
       {% endfor %}
     </ul>
     <script>
+        const deleteButtons = document.querySelectorAll('.button-delete');
+        for (let i = 0; i < deleteButtons.length; i++) {
+          const deleteButton = deleteButtons[i];
+          deleteButton.onclick = function(e) {
+            console.log(e);
+            const todoId = e.target.dataset['id'];
+            fetch('/todos/' + todoId, {
+              method: 'DELETE'
+            }).catch(function() {
+              document.getElementById('error').className = '';
+            })
+          }
+        }
        const checkBoxes = document.querySelectorAll('.check-completed');
        for (let i = 0; i < checkBoxes.length; i++) {
          const checkBox = checkBoxes[i];
@@ -49,6 +82,14 @@
              headers: {
                'Content-Type': 'application/json'
              }
+           })
+           .then(response => response.json())
+           .then(jsonResponse => {
+             console.log('response', jsonResponse);
+             li = document.createElement('li');
+             li.innerText = desc;
+             document.getElementById('todos');
+             document.getElementById('error').className = 'hidden';
            }).catch(function() {
              document.getElementById('error').className = '';
            })

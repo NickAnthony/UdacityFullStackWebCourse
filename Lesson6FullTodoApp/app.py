@@ -60,8 +60,23 @@ def set_completed_todo(todo_id):
     finally:
         db.session.close()
     if not error_occured:
-        return jsonify(body)
-    return redirect(url_for('index'))
+        return redirect(url_for('index'))
+
+
+
+@app.route('/todos/<todo_id>', methods=['DELETE'])
+def delete_todo(todo_id):
+    try:
+        todo = Todo.query.filter_by(id=todo_id).first()
+        if not todo:
+            raise Exception("Todo with id %s not found in the DB" % todo_id)
+        db.session.delete(todo)
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()
+    return jsonify({ 'success': True })
 
 
 @app.route('/')
