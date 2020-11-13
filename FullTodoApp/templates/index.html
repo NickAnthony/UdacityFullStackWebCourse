@@ -33,19 +33,38 @@
         vertical-align: top;
         margin: 5px;
       }
+      .list-input-form {
+        margin-top: 60px;
+      }
+      .selected-list-item {
+        font-weight: bold;
+      }
     </style>
   </head>
   <body>
+    <h1>Nick's Todo App</h1>
     <div class="lists-wrapper">
-      <ul id="todolist">
+      <h2>My todo lists:</h2>
+      <form id="list-input-form" class="list-input-form"
+            action="/todo/create" method="post">
+        <!-- <label for="description">Add your todo here:</label> -->
+        <input type="text" id="list-name" name="description">
+        <input type="submit" value="Create" />
+      </form>
+      <div id="error" class="hidden">Couldn't save todo!</div>
+      <ul id="todolists">
         {% for list in lists %}
         <li>
           <input class="check-completed"
                  type="checkbox"
                  {% if list.completed %} checked {% endif %}
                  data-id="{{ list.id }}" />
-          <a href={{ list.id }}>{{ list.name }}</a>
-          <button class="button-delete" data-id="{{ list.id }}">
+          {% if active_list.id == list.id %}
+            <a href={{ list.id }} class="selected-list-item">> {{ list.name }}</a>
+          {% else %}
+            <a href={{ list.id }}>{{ list.name }}</a>
+          {% endif %}
+          <button class="list-button-delete" data-id="{{ list.id }}">
             &cross;
           </button>
         </li>
@@ -53,13 +72,15 @@
       </ul>
     </div>
     <div class="todos-wrapper">
+      <h2>My todos:</h2>
       <h3>{{ active_list.name }}</h3>
-      <form id="form" action="/todo/create" method="post">
+      <form id="todo-input-form" class=id="todo-input-form"
+            action="/todo/create" method="post">
         <!-- <label for="description">Add your todo here:</label> -->
-        <input type="text" id="description" name="description">
+        <input type="text" id="todo-description" name="description">
         <input type="submit" value="Create" />
       </form>
-      <div id="error" class="hidden">Something went wrong!</div>
+      <div id="error" class="hidden">Couldn't save todo!</div>
       <ul id="todos">
         {% for todo in todos %}
           <li>
@@ -68,7 +89,7 @@
                    {% if todo.completed %} checked {% endif %}
                    data-id="{{ todo.id }}" />
             {{ todo.description }}
-            <button class="button-delete" data-id="{{ todo.id }}">
+            <button class="todo-button-delete" data-id="{{ todo.id }}">
               &cross;
             </button>
           </li>
@@ -76,13 +97,24 @@
       </ul>
     </div>
     <script>
-        const deleteButtons = document.querySelectorAll('.button-delete');
-        for (let i = 0; i < deleteButtons.length; i++) {
-          const deleteButton = deleteButtons[i];
+        const todoDeleteButtons = document.querySelectorAll('.todo-button-delete');
+        for (let i = 0; i < todoDeleteButtons.length; i++) {
+          const deleteButton = todoDeleteButtons[i];
           deleteButton.onclick = function(e) {
-            console.log(e);
             const todoId = e.target.dataset['id'];
             fetch('/todos/' + todoId, {
+              method: 'DELETE'
+            }).catch(function() {
+              document.getElementById('error').className = '';
+            })
+          }
+        }
+        const listDeleteButtons = document.querySelectorAll('.list-button-delete');
+        for (let i = 0; i < listDeleteButtons.length; i++) {
+          const deleteButton = listDeleteButtons[i];
+          deleteButton.onclick = function(e) {
+            const listId = e.target.dataset['id'];
+            fetch('/lists/' + listId, {
               method: 'DELETE'
             }).catch(function() {
               document.getElementById('error').className = '';
@@ -117,8 +149,8 @@
            })
          }
        }
-       const descInput = document.getElementById('description');
-       document.getElementById('form').onsubmit = function(e) {
+       const descInput = document.getElementById('todo-description');
+       document.getElementById('todo-input-form').onsubmit = function(e) {
          e.preventDefault();
          const desc = descInput.value;
          descInput.value = '';
@@ -126,6 +158,7 @@
            method: 'POST',
            body: JSON.stringify({
              'description': desc,
+             'list_id': {{ active_list.id }}
            }),
            headers: {
              'Content-Type': 'application/json',
@@ -137,6 +170,32 @@
            li = document.createElement('li');
            li.innerText = desc;
            document.getElementById('todos').appendChild(li);
+           document.getElementById('error').className = 'hidden';
+         })
+         .catch(function() {
+           document.getElementById('error').className = '';
+         })
+       }
+       const nameInput = document.getElementById('list-name');
+       document.getElementById('list-input-form').onsubmit = function(e) {
+         e.preventDefault();
+         const name = nameInput.value;
+         nameInput.value = '';
+         fetch('/lists/create', {
+           method: 'POST',
+           body: JSON.stringify({
+             'name': name
+           }),
+           headers: {
+             'Content-Type': 'application/json',
+           }
+         })
+         .then(response => response.json())
+         .then(jsonResponse => {
+           console.log('response', jsonResponse);
+           li = document.createElement('li');
+           li.innerText = name;
+           document.getElementById('todolists').appendChild(li);
            document.getElementById('error').className = 'hidden';
          })
          .catch(function() {
