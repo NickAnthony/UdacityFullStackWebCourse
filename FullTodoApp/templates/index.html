@@ -4,7 +4,10 @@
     <meta charset="utf-8">
     <title>Nick's Todo App</title>
     <style>
-      #error {
+      #listerror {
+        display: none;
+      }
+      #todoerror {
         display: none;
       }
       ul {
@@ -28,10 +31,25 @@
         float: right;
         font-size: 20px;
       }
-      .lists-wrapper, .todos-wrapper {
+      .lists-wrapper {
         display: inline-block;
         vertical-align: top;
         margin: 5px;
+      }
+      .todos-wrapper {
+        display: inline-block;
+        vertical-align: top;
+        margin: 5px;
+        border: 1px solid black;
+        border-radius: 8px;
+        padding: 10px;
+        background-color: #FBC02D;
+      }
+      .app-wrapper {
+        padding: 10px;
+        border: 1px solid black;
+        border-radius: 8px;
+        width: fit-content;
       }
       .list-input-form {
         margin-top: 60px;
@@ -43,6 +61,7 @@
   </head>
   <body>
     <h1>Nick's Todo App</h1>
+    <div class="app-wrapper">
     <div class="lists-wrapper">
       <h2>My todo lists:</h2>
       <form id="list-input-form" class="list-input-form"
@@ -51,11 +70,11 @@
         <input type="text" id="list-name" name="description">
         <input type="submit" value="Create" />
       </form>
-      <div id="error" class="hidden">Couldn't save todo!</div>
+      <div id="listerror" class="hidden">Couldn't save todo!</div>
       <ul id="todolists">
         {% for list in lists %}
         <li>
-          <input class="check-completed"
+          <input class="list-check-completed"
                  type="checkbox"
                  {% if list.completed %} checked {% endif %}
                  data-id="{{ list.id }}" />
@@ -73,18 +92,22 @@
     </div>
     <div class="todos-wrapper">
       <h2>My todos:</h2>
-      <h3>{{ active_list.name }}</h3>
+      {% if active_list %}
+        <h3>{{ active_list.name }}</h3>
+      {% else %}
+        <h3>No list currently selected</h3>
+      {% endif %}
       <form id="todo-input-form" class=id="todo-input-form"
             action="/todo/create" method="post">
         <!-- <label for="description">Add your todo here:</label> -->
         <input type="text" id="todo-description" name="description">
         <input type="submit" value="Create" />
       </form>
-      <div id="error" class="hidden">Couldn't save todo!</div>
+      <div id="todoerror" class="hidden">Couldn't save todo!</div>
       <ul id="todos">
         {% for todo in todos %}
           <li>
-            <input class="check-completed"
+            <input class="todo-check-completed"
                    type="checkbox"
                    {% if todo.completed %} checked {% endif %}
                    data-id="{{ todo.id }}" />
@@ -96,6 +119,7 @@
         {% endfor %}
       </ul>
     </div>
+    </div>
     <script>
         const todoDeleteButtons = document.querySelectorAll('.todo-button-delete');
         for (let i = 0; i < todoDeleteButtons.length; i++) {
@@ -105,7 +129,7 @@
             fetch('/todos/' + todoId, {
               method: 'DELETE'
             }).catch(function() {
-              document.getElementById('error').className = '';
+              document.getElementById('todoerror').className = '';
             })
           }
         }
@@ -117,14 +141,14 @@
             fetch('/lists/' + listId, {
               method: 'DELETE'
             }).catch(function() {
-              document.getElementById('error').className = '';
+              document.getElementById('listerror').className = '';
             })
           }
         }
-       const checkBoxes = document.querySelectorAll('.check-completed');
-       for (let i = 0; i < checkBoxes.length; i++) {
-         const checkBox = checkBoxes[i];
-         checkBox.onchange = function(e) {
+       const todoCheckBoxes = document.querySelectorAll('.todo-check-completed');
+       for (let i = 0; i < todoCheckBoxes.length; i++) {
+         const todoCheckBox = todoCheckBoxes[i];
+         todoCheckBox.onchange = function(e) {
            console.log(e);
            const newCompletedState = e.target.checked;
            const todoId = e.target.dataset['id'];
@@ -140,12 +164,34 @@
            .then(response => response.json())
            .then(jsonResponse => {
              console.log('response', jsonResponse);
-             li = document.createElement('li');
-             li.innerText = desc;
-             document.getElementById('todos');
-             document.getElementById('error').className = 'hidden';
+             document.getElementById('todoerror').className = 'hidden';
            }).catch(function() {
-             document.getElementById('error').className = '';
+             document.getElementById('todoerror').className = '';
+           })
+         }
+       }
+       const listCheckBoxes = document.querySelectorAll('.list-check-completed');
+       for (let i = 0; i < listCheckBoxes.length; i++) {
+         const listCheckBox = listCheckBoxes[i];
+         listCheckBox.onchange = function(e) {
+           console.log(e);
+           const newCompletedState = e.target.checked;
+           const listId = e.target.dataset['id'];
+           fetch('/lists/' + listId + '/set-completed', {
+             method: 'POST',
+             body: JSON.stringify({
+               'completed': newCompletedState
+             }),
+             headers: {
+               'Content-Type': 'application/json'
+             }
+           })
+           .then(response => response.json())
+           .then(jsonResponse => {
+             console.log('response', jsonResponse);
+             document.getElementById('listerror').className = 'hidden';
+           }).catch(function() {
+             document.getElementById('listerror').className = '';
            })
          }
        }
@@ -170,10 +216,10 @@
            li = document.createElement('li');
            li.innerText = desc;
            document.getElementById('todos').appendChild(li);
-           document.getElementById('error').className = 'hidden';
+           document.getElementById('todoerror').className = 'hidden';
          })
          .catch(function() {
-           document.getElementById('error').className = '';
+           document.getElementById('todoerror').className = '';
          })
        }
        const nameInput = document.getElementById('list-name');
@@ -196,12 +242,13 @@
            li = document.createElement('li');
            li.innerText = name;
            document.getElementById('todolists').appendChild(li);
-           document.getElementById('error').className = 'hidden';
+           document.getElementById('listerror').className = 'hidden';
          })
          .catch(function() {
-           document.getElementById('error').className = '';
+           document.getElementById('listerror').className = '';
          })
        }
+       document.getElementById('listerror').className = 'hidden';
      </script>
   </body>
 </html>
