@@ -32,34 +32,70 @@ migrate = Migrate(app, db)
 #----------------------------------------------------------------------------#
 
 class Venue(db.Model):
-    __tablename__ = 'Venue'
+    __tablename__ = 'venues'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
+    name = db.Column(db.String, nullable=False)
+    city = db.Column(db.String(120), nullable=True)
+    state = db.Column(db.String(120), nullable=True)
+    address = db.Column(db.String(120), nullable=True)
+    phone = db.Column(db.String(120), nullable=True)
+    image_link = db.Column(db.String(500), nullable=True)
+    facebook_link = db.Column(db.String(120), nullable=True)
+    # genres = db.Column(db.Array(db.String(120)), nullable=False)
+
+    website = db.Column(db.String(120), nullable=True, default=[])
+    seeking_talent = db.Column(db.Boolean(), nullable=False, default=False)
+    seeking_description = db.Column(db.String, nullable=True)
+    image_link = db.Column(db.String(500), nullable=True)
+    past_shows_count = db.Column(db.Integer(), nullable=False, default=0)
+    upcoming_shows_count = db.Column(db.Integer(), nullable=False, default=0)
+    genres = db.relationship('genres', lazy=True)
+    shows = db.relationship('shows', backref='venue', lazy=True)
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
-    __tablename__ = 'Artist'
+    __tablename__ = 'artists'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
+    name = db.Column(db.String, nullable=False)
+    city = db.Column(db.String(120), nullable=True)
+    state = db.Column(db.String(120), nullable=True)
+    phone = db.Column(db.String(120), nullable=True)
+    genres = db.Column(db.String(120), nullable=True)
+    image_link = db.Column(db.String(500), nullable=True)
+    facebook_link = db.Column(db.String(120), nullable=True)
+    website_link = db.Column(db.String(120), nullable=True)
+    seeking_venue = db.Column(db.Boolean(), nullable=False, default=False)
+    seeking_description = db.Column(db.String, nullable=True)
+    past_shows_count = db.Column(db.Integer(), nullable=False, default=0)
+    upcoming_shows_count = db.Column(db.Integer(), nullable=False, default=0)
+    # "past_shows": [{
+    #   "venue_id": 1,
+    #   "venue_name": "The Musical Hop",
+    #   "venue_image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
+    #   "start_time": "2019-05-21T21:30:00.000Z"
+    # }],
+    # "upcoming_shows": [],
+    shows = db.relationship('shows', backref='artist', lazy=True)
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+
+class Show(db.Model):
+    __tablename__ = 'shows'
+    id = db.Column(db.Integer, primary_key=True)
+    start_time = db.Column(db.DateTime, nullable=False)
+    venue_id = db.Column(db.Integer, db.ForeignKey('venues.id'),
+                         nullable=False, default=1)
+    artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'),
+                          nullable=False, default=1)
+
+class Genre(db.Model):
+    __tablename__ = 'genres'
+    name = db.Column(db.String, primary_key=True, nullable=False)
 
 #----------------------------------------------------------------------------#
 # Filters.
