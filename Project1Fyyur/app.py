@@ -41,13 +41,11 @@ class Venue(db.Model):
     phone = db.Column(db.String(120), nullable=True)
     image_link = db.Column(db.String(500), nullable=True)
     facebook_link = db.Column(db.String(120), nullable=True)
-    # genres = db.Column(db.Array(db.String(120)), nullable=False)
-
+    genres = db.Column(db.ARRAY(db.String), nullable=False, default=[])
     website = db.Column(db.String(120), nullable=True, default=[])
     seeking_talent = db.Column(db.Boolean(), nullable=False, default=False)
     seeking_description = db.Column(db.String, nullable=True)
     image_link = db.Column(db.String(500), nullable=True)
-    genres = db.relationship('genres', lazy=True)
     shows = db.relationship('shows', backref='venue', lazy=True)
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
@@ -60,7 +58,7 @@ class Artist(db.Model):
     city = db.Column(db.String(120), nullable=True)
     state = db.Column(db.String(120), nullable=True)
     phone = db.Column(db.String(120), nullable=True)
-    genres = db.Column(db.String(120), nullable=True)
+    genres = db.Column(db.ARRAY(db.String), nullable=False, default=[])
     image_link = db.Column(db.String(500), nullable=True)
     facebook_link = db.Column(db.String(120), nullable=True)
     website_link = db.Column(db.String(120), nullable=True)
@@ -80,10 +78,6 @@ class Show(db.Model):
                          nullable=False, default=1)
     artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'),
                           nullable=False, default=1)
-
-class Genre(db.Model):
-    __tablename__ = 'genres'
-    name = db.Column(db.String, primary_key=True, nullable=False)
 
 #----------------------------------------------------------------------------#
 # Filters.
