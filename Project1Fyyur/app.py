@@ -5,7 +5,7 @@
 import json
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, jsonify
 from flask_migrate import Migrate
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
@@ -47,6 +47,22 @@ class Venue(db.Model):
     seeking_description = db.Column(db.String, nullable=True)
     image_link = db.Column(db.String(500), nullable=True)
     shows = db.relationship('Show', backref='venue', lazy=True)
+
+    def to_dict(self):
+      return ({
+        "id": self.id,
+        "name": self.name,
+        "genres": self.genres,
+        "address": self.address,
+        "city": self.city,
+        "state": self.state,
+        "phone": self.phone,
+        "website": self.website,
+        "facebook_link": self.facebook_link,
+        "seeking_talent": self.seeking_talent,
+        "seeking_description": self.seeking_description,
+        "image_link": self.image_link
+      })
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -104,32 +120,52 @@ def index():
 
 #  Venues
 #  ----------------------------------------------------------------
+def data_contains_location(venue, date):
+  for location in data:
+    # city and state already exist
+    if (location["city"] == venue.city and
+        location["state"] == venue.state):
+        return True
+  return False
+
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  # DONE: replace with real venues data.
+  # num_shows should be aggregated based on number of upcoming shows per venue.
+  venues = Venue.query.all()
+  data = []
+  for venue in venues:
+      added_venue = False
+      for location in data:
+          # city and state already exist
+          if (location["city"] == venue.city and
+              location["state"] == venue.state):
+              ## Append the venue to the existing location
+              num_upcoming_shows = len(list(filter(
+                lambda show: show.start_time > datetime.now(), venue.shows
+              )))
+              location["venues"].append({
+                "id": venue.id,
+                "name": venue.name,
+                "num_upcoming_shows": num_upcoming_shows,
+              })
+              added_venue = True
+      if not added_venue:
+          ## Add the location to the data
+          num_upcoming_shows = len(list(filter(
+            lambda show: show.start_time > datetime.now(), venue.shows
+          )))
+          ## Add the venue to the location
+          data.append({
+              "city": venue.city,
+              "state": venue.state,
+              "venues": [{
+                "id": venue.id,
+                "name": venue.name,
+                "num_upcoming_shows": num_upcoming_shows
+              }]
+          })
   return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])
@@ -158,15 +194,12 @@ def show_venue(venue_id):
                              chosen_venue.shows))
     upcoming_shows_count = len(upcoming_shows)
     past_shows_count = len(past_shows)
-    response = jsonify(venue)
-    response.append({
-        "upcoming_shows": upcoming_shows,
-        "past_shows": past_shows,
-        "upcoming_shows_count": upcoming_shows_count,
-        "past_shows_count": past_shows_count,
-    })
-    return render_template('pages/show_venue.html',
-                            venue=response)
+    response = chosen_venue.to_dict()
+    response["upcoming_shows"] = upcoming_shows
+    response["past_shows"] = past_shows
+    response["upcoming_shows_count"] = upcoming_shows_count
+    response["past_shows_count"] = past_shows_count
+    return render_template('pages/show_venue.html', venue=response)
 
 #  Create Venue
 #  ----------------------------------------------------------------
