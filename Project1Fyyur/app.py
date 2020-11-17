@@ -186,7 +186,7 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
     # shows the venue page with the given venue_id
-    # TODO: replace with real venue data from the venues table, using venue_id
+    # DONE: replace with real venue data from the venues table, using venue_id
     chosen_venue = Venue.query.get(venue_id)
     upcoming_shows = list(filter(lambda show: show.start_time > datetime.now(),
                                  chosen_venue.shows))
@@ -246,17 +246,14 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-  # TODO: replace with real data returned from querying the database
-  data=[{
-    "id": 4,
-    "name": "Guns N Petals",
-  }, {
-    "id": 5,
-    "name": "Matt Quevedo",
-  }, {
-    "id": 6,
-    "name": "The Wild Sax Band",
-  }]
+  # DONE: replace with real data returned from querying the database
+  artists = Artist.query.all()
+  data = []
+  for artist in artists:
+    data.append({
+      "id": artist.id,
+      "name": artist.name
+    })
   return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
