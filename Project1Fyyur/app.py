@@ -2,18 +2,20 @@
 # Imports
 #----------------------------------------------------------------------------#
 
-import json
-import dateutil.parser
-import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for, jsonify
 from flask_migrate import Migrate
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
-import logging
-from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+from logging import Formatter, FileHandler
+import babel
 import datetime
+import dateutil.parser
+import json
+import logging
+import re
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -110,6 +112,26 @@ def format_datetime(value, format='medium'):
 app.jinja_env.filters['datetime'] = format_datetime
 
 #----------------------------------------------------------------------------#
+# Utils.
+#----------------------------------------------------------------------------#
+
+def get_upcoming_shows(artists_or_venue):
+  return list(filter(
+    lambda show: show.start_time >= datetime.now(), artists_or_venue.shows
+  ))
+
+def get_past_shows(artists_or_venue):
+  return list(filter(
+    lambda show: show.start_time < datetime.now(), artists_or_venue.shows
+  ))
+
+def get_num_upcoming_shows(artists_or_venue):
+  return len(get_upcoming_shows(artists_or_venue))
+
+def get_num_past_shows(artists_or_venue):
+  return len(get_past_shows(artists_or_venue))
+
+#----------------------------------------------------------------------------#
 # Controllers.
 #----------------------------------------------------------------------------#
 
@@ -120,14 +142,6 @@ def index():
 
 #  Venues
 #  ----------------------------------------------------------------
-def data_contains_location(venue, date):
-  for location in data:
-    # city and state already exist
-    if (location["city"] == venue.city and
-        location["state"] == venue.state):
-        return True
-  return False
-
 
 @app.route('/venues')
 def venues():
@@ -141,29 +155,21 @@ def venues():
           # city and state already exist
           if (location["city"] == venue.city and
               location["state"] == venue.state):
-              ## Append the venue to the existing location
-              num_upcoming_shows = len(list(filter(
-                lambda show: show.start_time > datetime.now(), venue.shows
-              )))
               location["venues"].append({
                 "id": venue.id,
                 "name": venue.name,
-                "num_upcoming_shows": num_upcoming_shows,
+                "num_upcoming_shows": get_num_upcoming_shows(venue),
               })
               added_venue = True
       if not added_venue:
-          ## Add the location to the data
-          num_upcoming_shows = len(list(filter(
-            lambda show: show.start_time > datetime.now(), venue.shows
-          )))
-          ## Add the venue to the location
+          ## Add the location to the data and add the venue to the location
           data.append({
               "city": venue.city,
               "state": venue.state,
               "venues": [{
                 "id": venue.id,
                 "name": venue.name,
-                "num_upcoming_shows": num_upcoming_shows
+                "num_upcoming_shows": get_num_upcoming_shows(venue)
               }]
           })
   return render_template('pages/venues.html', areas=data);
@@ -188,10 +194,8 @@ def show_venue(venue_id):
     # shows the venue page with the given venue_id
     # DONE: replace with real venue data from the venues table, using venue_id
     chosen_venue = Venue.query.get(venue_id)
-    upcoming_shows = list(filter(lambda show: show.start_time > datetime.now(),
-                                 chosen_venue.shows))
-    past_shows = list(filter(lambda show: show.start_time < datetime.now(),
-                             chosen_venue.shows))
+    upcoming_shows = get_upcoming_shows(venue)
+    past_shows = get_past_shows(venue)
     upcoming_shows_count = len(upcoming_shows)
     past_shows_count = len(past_shows)
     response = chosen_venue.to_dict()
@@ -258,17 +262,24 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
+  # Done: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
+  response = {
+    "count": 0,
+    "data": []
   }
+  search_term = request.form.get('search_term', '')
+  artists = Artist.query.all()
+  for artist in artists:
+    if re.search(search_term, artist.name, re.IGNORECASE):
+      # Found a match
+      response["data"].append({
+        "id": artist.id,
+        "name": artist.name,
+        "num_upcoming_shows": get_upcoming_shows(artist)
+      })
+      response["count"] = response["count"] + 1
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/artists/<int:artist_id>')
