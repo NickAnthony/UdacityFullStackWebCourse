@@ -89,13 +89,12 @@ class Artist(db.Model):
         "id": self.id,
         "name": self.name,
         "genres": self.genres,
-        "address": self.address,
         "city": self.city,
         "state": self.state,
         "phone": self.phone,
         "website": self.website,
         "facebook_link": self.facebook_link,
-        "seeking_talent": self.seeking_talent,
+        "seeking_venue": self.seeking_venue,
         "seeking_description": self.seeking_description,
         "image_link": self.image_link
       })
@@ -307,12 +306,12 @@ def search_artists():
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
-  # shows the venue page with the given venue_id
-  # DONE: replace with real venue data from the venues table, using venue_id
+  # shows the Artist page with the given venue_id
+  # DONE: replace with real artist data from the venues table, using artist_id
   artist = Artist.query.get(artist_id)
   response = artist.to_dict()
-  upcoming_shows = get_upcoming_shows(venue)
-  past_shows = get_past_shows(venue)
+  upcoming_shows = get_upcoming_shows(artist)
+  past_shows = get_past_shows(artist)
   upcoming_shows_count = len(upcoming_shows)
   past_shows_count = len(past_shows)
   response["upcoming_shows"] = upcoming_shows
@@ -338,9 +337,17 @@ def edit_artist(artist_id):
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-  # TODO: take values from the form submitted, and update existing
+  # DONE: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
-
+  artist = Artist.query.get(artist_id)
+  artist.name = request.form.get('name', '')
+  artist.city = request.form.get('city', '')
+  artist.state = request.form.get('state', '')
+  artist.phone = request.form.get('phone', '')
+  artist.image_link = request.form.get('image_link', None)
+  artist.genres = request.form.get('genres', [])
+  artist.facebook_link = request.form.get('facebook_link', None)
+  db.session.commit()
   return redirect(url_for('show_artist', artist_id=artist_id))
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
