@@ -327,6 +327,7 @@ def edit_artist(artist_id):
   form = ArtistForm()
   # DONE: populate form with fields from artist with ID <artist_id>
   artist = Artist.query.get(artist_id)
+  form.name = artist.name
   form.city = artist.city
   form.state = artist.state
   form.phone = artist.phone
@@ -353,27 +354,32 @@ def edit_artist_submission(artist_id):
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
   form = VenueForm()
-  venue={
-    "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
-    "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    "seeking_talent": True,
-    "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
-  }
-  # TODO: populate form with values from venue with ID <venue_id>
+  # DONE: populate form with values from venue with ID <venue_id>
+  venue = Venue.query.get(venue_id)
+  form.name = venue.name
+  form.city = venue.city
+  form.state = venue.state
+  form.address = venue.address
+  form.phone = venue.phone
+  form.image_link = venue.image_link
+  form.genres = venue.genres
+  form.facebook_link = venue.facebook_link
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
+  # DONE: take values from the form submitted, and update existing
   # venue record with ID <venue_id> using the new attributes
+  venue = Venue.query.get(venue_id)
+  venue.name = request.form.get('name', '')
+  venue.city = request.form.get('city', '')
+  venue.state = request.form.get('state', '')
+  venue.address = request.form.get('address', '')
+  venue.phone = request.form.get('phone', '')
+  venue.image_link = request.form.get('image_link', None)
+  venue.genres = request.form.get('genres', [])
+  venue.facebook_link = request.form.get('facebook_link', None)
+  db.session.commit()
   return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
