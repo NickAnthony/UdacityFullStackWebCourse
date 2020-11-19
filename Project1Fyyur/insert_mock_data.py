@@ -191,7 +191,7 @@ for data in artist_data:
        city=data["city"],
        state=data["state"],
        phone=data["phone"],
-       website_link=data["website"] if ("website" in data) else None,
+       website=data["website"] if ("website" in data) else None,
        facebook_link=data["facebook_link"] if "facebook_link" in data else None,
        seeking_venue=data["seeking_venue"] if
                       ("seeking_venue" in data) else None,

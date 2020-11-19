@@ -216,8 +216,8 @@ def show_venue(venue_id):
     # shows the venue page with the given venue_id
     # DONE: replace with real venue data from the venues table, using venue_id
     chosen_venue = Venue.query.get(venue_id)
-    upcoming_shows = get_upcoming_shows(venue)
-    past_shows = get_past_shows(venue)
+    upcoming_shows = get_upcoming_shows(chosen_venue)
+    past_shows = get_past_shows(chosen_venue)
     upcoming_shows_count = len(upcoming_shows)
     past_shows_count = len(past_shows)
     response = chosen_venue.to_dict()
