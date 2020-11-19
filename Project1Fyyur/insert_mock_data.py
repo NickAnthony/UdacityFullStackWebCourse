@@ -19,6 +19,12 @@ def venue_or_artist_exists(existing_rows, name):
             return True
     return False
 
+def show_exists(existing_shows, start_time):
+    for existing_show in existing_shows:
+        if existing_show.start_time == start_time:
+            return True
+    return False
+
 # Venue data:
 venue_data = [{
        "id": 1,
@@ -200,4 +206,56 @@ for data in artist_data:
        image_link=data["image_link"]
     )
     db.session.add(new_artist)
+db.session.commit()
+
+show_data = [{
+  "venue_id": 1,
+  "venue_name": "The Musical Hop",
+  "artist_id": 4,
+  "artist_name": "Guns N Petals",
+  "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+  "start_time": "2019-05-21T21:30:00.000Z"
+}, {
+  "venue_id": 3,
+  "venue_name": "Park Square Live Music & Coffee",
+  "artist_id": 5,
+  "artist_name": "Matt Quevedo",
+  "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
+  "start_time": "2019-06-15T23:00:00.000Z"
+}, {
+  "venue_id": 3,
+  "venue_name": "Park Square Live Music & Coffee",
+  "artist_id": 6,
+  "artist_name": "The Wild Sax Band",
+  "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+  "start_time": "2035-04-01T20:00:00.000Z"
+}, {
+  "venue_id": 3,
+  "venue_name": "Park Square Live Music & Coffee",
+  "artist_id": 6,
+  "artist_name": "The Wild Sax Band",
+  "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+  "start_time": "2035-04-08T20:00:00.000Z"
+}, {
+  "venue_id": 3,
+  "venue_name": "Park Square Live Music & Coffee",
+  "artist_id": 6,
+  "artist_name": "The Wild Sax Band",
+  "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+  "start_time": "2035-04-15T20:00:00.000Z"
+}]
+existing_artists = Artist.query.all()
+existing_venues = Venue.query.all()
+existing_shows = Show.query.all()
+for data in show_data:
+    if show_exists(existing_shows, data["start_time"]):
+        continue;
+    venue = Venue.query.filter_by(name = data["venue_name"]).first()
+    artist = Artist.query.filter_by(name = data["artist_name"]).first()
+    new_show = Show(
+       start_time=data["start_time"],
+       artist=artist,
+       venue=venue
+    )
+    db.session.add(new_show)
 db.session.commit()
