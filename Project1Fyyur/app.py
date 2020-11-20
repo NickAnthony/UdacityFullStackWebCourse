@@ -505,21 +505,7 @@ def create_shows():
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
   # called to create new shows in the db, upon submitting new show listing form
-  # TODO: insert form data as a new Show record in the db, instead
-  class ShowForm(Form):
-      artist_id = StringField(
-          'artist_id'
-      )
-      venue_id = StringField(
-          'venue_id'
-      )
-      start_time = DateTimeField(
-          'start_time',
-          validators=[DataRequired()],
-          default= datetime.today()
-      )
-
-
+  # DONE: insert form data as a new Show record in the db, instead
   error_occured = False
   error_reason = ''
   body = {}
