@@ -120,7 +120,11 @@ class Show(db.Model):
         "id": self.id,
         "start_time": format_datetime(str(self.start_time)),
         "venue_id": self.venue_id,
-        "artist_id": self.artist_id
+        "venue_name": self.venue.name,
+        "venue_image_link": self.venue.image_link,
+        "artist_id": self.artist_id,
+        "artist_name": self.artist.name,
+        "artist_image_link": self.artist.image_link,
       })
 
 #----------------------------------------------------------------------------#
@@ -502,12 +506,7 @@ def shows():
   shows = Show.query.all()
   response = []
   for show in shows:
-    show_data = show.to_dict()
-    show_data["artist_name"] = show.artist.name
-    show_data["artist_image_link"] = show.artist.image_link
-    show_data["venue_name"] = show.venue.name
-    show_data["venue_image_link"] = show.venue.image_link
-    response.append(show_data)
+    response.append(show.to_dict())
   return render_template('pages/shows.html', shows=response)
 
 @app.route('/shows/create')
