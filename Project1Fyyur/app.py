@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, Response, flash, redirect, ur
 from flask_migrate import Migrate
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from flask_wtf import Form
 from forms import *
 from logging import Formatter, FileHandler
@@ -66,6 +66,9 @@ class Venue(db.Model):
         "image_link": self.image_link
       })
 
+      def __repr__(self):
+        return f'<Venue {self.id} {self.name}>'
+
     # DONE: implement any missing fields, as a database migration using
     # Flask-Migrate
 
@@ -100,6 +103,9 @@ class Artist(db.Model):
         "image_link": self.image_link
       })
 
+      def __repr__(self):
+        return f'<Artist {self.id} {self.name}>'
+
     # DONE: implement any missing fields, as a database migration using
     # Flask-Migrate
 
@@ -127,6 +133,9 @@ class Show(db.Model):
         "artist_image_link": self.artist.image_link,
       })
 
+      def __repr__(self):
+        return f'<Show {self.id} {format_datetime(str(self.start_time))}>'
+
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
@@ -145,32 +154,57 @@ app.jinja_env.filters['datetime'] = format_datetime
 # Utils for getting upcoming and past shows.
 #----------------------------------------------------------------------------#
 
-def get_upcoming_shows_serialized(artists_or_venue):
-    # Returns a list of shows in dict format
-    upcoming_shows = get_upcoming_shows(artists_or_venue)
-    return list(map(lambda show: show.to_dict(), upcoming_shows))
+def serialize_shows(shows):
+    serialized_shows = []
+    for show in shows:
+        serialized_shows.append({
+          "id": show.id,
+          "start_time": format_datetime(str(show.start_time)),
+          "venue_id": show.venue_id,
+          "venue_name": show.venue.name,
+          "venue_image_link": show.venue.image_link,
+          "artist_id": show.artist_id,
+          "artist_name": show.artist.name,
+          "artist_image_link": show.artist.image_link,
+        })
+    return serialized_shows
 
-def get_past_shows_serialized(artists_or_venue):
-    past_shows = get_past_shows(artists_or_venue)
-    return list(map(lambda show: show.to_dict(), past_shows))
+def get_upcoming_artist_shows(artist_id):
+    shows = db.session.query(Show).join(Artist).filter(
+        and_(
+            Artist.id == artist_id,
+            Show.start_time >= datetime.datetime.now()
+        )
+    ).all()
+    return serialize_shows(shows)
 
-def get_upcoming_shows(artists_or_venue):
-    return list(filter(
-        lambda show: show.start_time >= datetime.datetime.now(),
-        artists_or_venue.shows
-    ))
 
-def get_past_shows(artists_or_venue):
-    return list(filter(
-        lambda show: show.start_time < datetime.datetime.now(),
-        artists_or_venue.shows
-    ))
+def get_upcoming_venue_shows(venue_id):
+    shows = db.session.query(Show).join(Venue).filter(
+        and_(
+            Venue.id == venue_id,
+            Show.start_time >= datetime.datetime.now()
+        )
+    ).all()
+    return serialize_shows(shows)
 
-def get_num_upcoming_shows(artists_or_venue):
-    return len(get_upcoming_shows(artists_or_venue))
+def get_past_artist_shows(artist_id):
+    shows = db.session.query(Show).join(Artist).filter(
+        and_(
+            Artist.id == artist_id,
+            Show.start_time < datetime.datetime.now()
+        )
+    ).all()
+    return serialize_shows(shows)
 
-def get_num_past_shows(artists_or_venue):
-    return len(get_past_shows(artists_or_venue))
+def get_past_venue_shows(venue_id):
+    shows = db.session.query(Show).join(Venue).filter(
+        and_(
+            Venue.id == venue_id,
+            Show.start_time < datetime.datetime.now()
+        )
+    ).all()
+    return serialize_shows(shows)
 
 #----------------------------------------------------------------------------#
 # Controllers.
@@ -199,7 +233,7 @@ def venues():
               location["venues"].append({
                 "id": venue.id,
                 "name": venue.name,
-                "num_upcoming_shows": get_num_upcoming_shows(venue),
+                "num_upcoming_shows": len(get_upcoming_venue_shows(venue.id)),
               })
               added_venue = True
       if not added_venue:
@@ -210,7 +244,7 @@ def venues():
               "venues": [{
                 "id": venue.id,
                 "name": venue.name,
-                "num_upcoming_shows": get_num_upcoming_shows(venue)
+                "num_upcoming_shows": len(get_upcoming_venue_shows(venue.id)),
               }]
           })
   return render_template('pages/venues.html', areas=data);
@@ -237,7 +271,7 @@ def search_venues():
     response["data"].append({
       "id": venue.id,
       "name": venue.name,
-      "num_upcoming_shows": get_num_upcoming_shows(venue)
+      "num_upcoming_shows": len(get_upcoming_venue_shows(venue.id)),
     })
     response["count"] = response["count"] + 1
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
@@ -247,8 +281,8 @@ def show_venue(venue_id):
     # shows the venue page with the given venue_id
     # DONE: replace with real venue data from the venues table, using venue_id
     chosen_venue = Venue.query.get(venue_id)
-    upcoming_shows = get_upcoming_shows_serialized(chosen_venue)
-    past_shows = get_past_shows_serialized(chosen_venue)
+    upcoming_shows = get_upcoming_venue_shows(venue_id)
+    past_shows = get_past_venue_shows(venue_id)
     upcoming_shows_count = len(upcoming_shows)
     past_shows_count = len(past_shows)
     response = chosen_venue.to_dict()
@@ -368,7 +402,7 @@ def search_artists():
     response["data"].append({
       "id": artist.id,
       "name": artist.name,
-      "num_upcoming_shows": get_num_upcoming_shows(artist)
+      "num_upcoming_shows": len(get_upcoming_artist_shows(artist.id)),
     })
     response["count"] = response["count"] + 1
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
@@ -379,8 +413,8 @@ def show_artist(artist_id):
   # DONE: replace with real artist data from the venues table, using artist_id
   artist = Artist.query.get(artist_id)
   response = artist.to_dict()
-  upcoming_shows = get_upcoming_shows_serialized(artist)
-  past_shows = get_past_shows_serialized(artist)
+  upcoming_shows = get_upcoming_artist_shows(artist_id)
+  past_shows = get_past_artist_shows(artist_id)
   upcoming_shows_count = len(upcoming_shows)
   past_shows_count = len(past_shows)
   response["upcoming_shows"] = upcoming_shows
