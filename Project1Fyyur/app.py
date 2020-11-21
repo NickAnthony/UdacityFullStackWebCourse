@@ -223,17 +223,19 @@ def search_venues():
     "count": 0,
     "data": []
   }
-  search_term = request.form.get('search_term', '')
-  venues = Venue.query.all()
+  # Do a SQL query using name LIKE %search_term%
+  search_term = "%{}%".format(request.form.get('search_term', ''))
+  venues = Venue.query.filter(
+    Venue.name.ilike(search_term)
+  ).all()
+  # Create the result response
   for venue in venues:
-    if re.search(search_term, venue.name, re.IGNORECASE):
-      # Found a match
-      response["data"].append({
-        "id": venue.id,
-        "name": venue.name,
-        "num_upcoming_shows": get_upcoming_shows_serialized(venue)
-      })
-      response["count"] = response["count"] + 1
+    response["data"].append({
+      "id": venue.id,
+      "name": venue.name,
+      "num_upcoming_shows": get_num_upcoming_shows(venue)
+    })
+    response["count"] = response["count"] + 1
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/venues/<int:venue_id>')
@@ -350,17 +352,19 @@ def search_artists():
     "count": 0,
     "data": []
   }
-  search_term = request.form.get('search_term', '')
-  artists = Artist.query.all()
+  # Do a SQL query using name LIKE %search_term%
+  search_term = "%{}%".format(request.form.get('search_term', ''))
+  artists = Artist.query.filter(
+    Artist.name.ilike(search_term)
+  ).all()
+  # Create the result response
   for artist in artists:
-    if re.search(search_term, artist.name, re.IGNORECASE):
-      # Found a match
-      response["data"].append({
-        "id": artist.id,
-        "name": artist.name,
-        "num_upcoming_shows": get_upcoming_shows_serialized(artist)
-      })
-      response["count"] = response["count"] + 1
+    response["data"].append({
+      "id": artist.id,
+      "name": artist.name,
+      "num_upcoming_shows": get_num_upcoming_shows(artist)
+    })
+    response["count"] = response["count"] + 1
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/artists/<int:artist_id>')
