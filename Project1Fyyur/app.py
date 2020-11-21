@@ -276,7 +276,7 @@ def create_venue_submission():
         address = request.form.get('address', None),
         phone = request.form.get('phone', None),
         image_link = request.form.get('image_link', None),
-        genres = request.form.get('genres', []),
+        genres = request.form.getlist('genres'),
         facebook_link = request.form.get('facebook_link', None),
       )
       db.session.add(new_venue)
@@ -292,7 +292,7 @@ def create_venue_submission():
   except:
       db.session.rollback()
       error_occured = True
-      print(sys.exec_info())
+      # print(sys.exec_info())
   finally:
       db.session.close()
   if not error_occured:
@@ -386,13 +386,13 @@ def edit_artist(artist_id):
   form = ArtistForm()
   # DONE: populate form with fields from artist with ID <artist_id>
   artist = Artist.query.get(artist_id)
-  form.name = artist.name
-  form.city = artist.city
-  form.state = artist.state
-  form.phone = artist.phone
-  form.image_link = artist.image_link
-  form.genres = artist.genres
-  form.facebook_link = artist.facebook_link
+  form.name.data = artist.name
+  form.city.data = artist.city
+  form.state.data = artist.state
+  form.phone.data = artist.phone
+  form.image_link.data = artist.image_link
+  form.genres.data = artist.genres
+  form.facebook_link.data = artist.facebook_link
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
@@ -405,7 +405,7 @@ def edit_artist_submission(artist_id):
   artist.state = request.form.get('state', '')
   artist.phone = request.form.get('phone', '')
   artist.image_link = request.form.get('image_link', None)
-  artist.genres = request.form.get('genres', [])
+  artist.genres = request.form.getlist('genres')
   artist.facebook_link = request.form.get('facebook_link', None)
   db.session.commit()
   return redirect(url_for('show_artist', artist_id=artist_id))
@@ -415,14 +415,14 @@ def edit_venue(venue_id):
   form = VenueForm()
   # DONE: populate form with values from venue with ID <venue_id>
   venue = Venue.query.get(venue_id)
-  form.name = venue.name
-  form.city = venue.city
-  form.state = venue.state
-  form.address = venue.address
-  form.phone = venue.phone
-  form.image_link = venue.image_link
-  form.genres = venue.genres
-  form.facebook_link = venue.facebook_link
+  form.name.data = venue.name
+  form.city.data = venue.city
+  form.state.data = venue.state
+  form.address.data = venue.address
+  form.phone.data = venue.phone
+  form.image_link.data = venue.image_link
+  form.genres.data = venue.genres
+  form.facebook_link.data = venue.facebook_link
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
@@ -436,7 +436,7 @@ def edit_venue_submission(venue_id):
   venue.address = request.form.get('address', '')
   venue.phone = request.form.get('phone', '')
   venue.image_link = request.form.get('image_link', None)
-  venue.genres = request.form.get('genres', [])
+  venue.genres = request.form.getlist('genres')
   venue.facebook_link = request.form.get('facebook_link', None)
   db.session.commit()
   return redirect(url_for('show_venue', venue_id=venue_id))
@@ -465,7 +465,7 @@ def create_artist_submission():
         state = request.form.get('state', None),
         phone = request.form.get('phone', None),
         image_link = request.form.get('image_link', None),
-        genres = request.form.get('genres', []),
+        genres = request.form.getlist('genres'),
         facebook_link = request.form.get('facebook_link', None),
       )
       db.session.add(new_artist)
