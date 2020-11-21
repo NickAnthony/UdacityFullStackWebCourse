@@ -5,7 +5,7 @@
 from flask import Flask, render_template, request, Response, flash, redirect, url_for, jsonify
 from flask_migrate import Migrate
 from flask_moment import Moment
-from flask_sqlalchemy import SQLAlchemy 
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from flask_wtf import Form
 from forms import *
@@ -48,7 +48,7 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.Boolean(), nullable=False, default=False)
     seeking_description = db.Column(db.String, nullable=True)
     image_link = db.Column(db.String(500), nullable=True)
-    shows = db.relationship('Show', backref='venue', lazy=True)
+    shows = db.relationship('Show', backref='venue', lazy=True, cascade="all, delete")
 
     def to_dict(self):
       return ({
@@ -83,7 +83,7 @@ class Artist(db.Model):
     website = db.Column(db.String(120), nullable=True)
     seeking_venue = db.Column(db.Boolean(), nullable=False, default=False)
     seeking_description = db.Column(db.String, nullable=True)
-    shows = db.relationship('Show', backref='artist', lazy=True)
+    shows = db.relationship('Show', backref='artist', lazy=True, cascade="all, delete")
 
     def to_dict(self):
       return ({
@@ -142,10 +142,11 @@ def format_datetime(value, format='medium'):
 app.jinja_env.filters['datetime'] = format_datetime
 
 #----------------------------------------------------------------------------#
-# Utils.
+# Utils for getting upcoming and past shows.
 #----------------------------------------------------------------------------#
 
 def get_upcoming_shows_serialized(artists_or_venue):
+    # Returns a list of shows in dict format
     upcoming_shows = get_upcoming_shows(artists_or_venue)
     return list(map(lambda show: show.to_dict(), upcoming_shows))
 
@@ -286,7 +287,9 @@ def create_venue_submission():
       )
       db.session.add(new_venue)
       db.session.commit()
-      body['name'] = new_venue.name
+      # Save the object information in the body.
+      # We can get the id because the object has been flushed.
+      body['id'] = new_venue.id
       body['name'] = new_venue.name
       body['city'] = new_venue.city
       body['state'] = new_venue.state
@@ -297,13 +300,13 @@ def create_venue_submission():
   except:
       db.session.rollback()
       error_occured = True
-      # print(sys.exec_info())
   finally:
       db.session.close()
   if not error_occured:
       # on successful db insert, flash success
       flash('Venue ' + request.form['name'] + ' was successfully listed!')
-      return jsonify(body)
+      # Redirect to that venue's page
+      return redirect(url_for('show_venue', venue_id=body['id'], response=body))
   else:
       # DONE: on unsuccessful db insert, flash an error instead.
       # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
@@ -327,7 +330,7 @@ def delete_venue(venue_id):
         db.session.rollback()
     finally:
         db.session.close()
-    return jsonify({ 'success': (not error_occured) })
+    return redirect(url_for('/', response=jsonify({ 'success': (not error_occured) })))
 
     # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
     # clicking that button delete it from the db then redirect the user to the homepage
@@ -477,7 +480,9 @@ def create_artist_submission():
       )
       db.session.add(new_artist)
       db.session.commit()
-      body['name'] = new_artist.name
+      # Save the object information in the body.
+      # We can get the id because the object has been flushed.
+      body['id'] = new_artist.id
       body['name'] = new_artist.name
       body['city'] = new_artist.city
       body['state'] = new_artist.state
@@ -494,7 +499,8 @@ def create_artist_submission():
   if not error_occured:
       # on successful db insert, flash success
       flash('Artist ' + body['name'] + ' was successfully listed!')
-      return jsonify(body)
+      # Redirect to that venue's page.
+      return redirect(url_for('show_artist', artist_id=body['id'], response=body))
   else:
       # DONE: on unsuccessful db insert, flash an error instead.
       # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
@@ -509,7 +515,6 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # DONE: replace with real venues data.
-  # num_shows should be aggregated based on number of upcoming shows per venue.
   shows = Show.query.all()
   response = []
   for show in shows:
@@ -528,21 +533,20 @@ def search_shows():
   }
   # Do a SQL query using name LIKE %search_term%
   search_term = "%{}%".format(request.form.get('search_term', ''))
+  # Search artist names for the search term.
   artist_matches = Show.query.join(Show.artist).filter(
     Artist.name.ilike(search_term)
   ).all()
+  # Search venue names for the search term.
   venue_matches = Show.query.join(Show.venue).filter(
     Venue.name.ilike(search_term)
   ).all()
-  venue_matches = Show.query.join(Show.venue).filter(
-    Venue.name.ilike(search_term)
-  ).all()
+  # Combine the result
   shows = artist_matches + venue_matches
   # Create the result response
   for show in shows:
     response["data"].append(show.to_dict())
     response["count"] = response["count"] + 1
-  print(response)
   return render_template('pages/search_shows.html', results=response, search_term=request.form.get('search_term', ''))
 
 
@@ -560,22 +564,11 @@ def create_show_submission():
   error_reason = ''
   body = {}
   try:
-      new_show_start_time = request.form.get('start_time', None)
-      new_show_artist_id = request.form.get('artist_id', None)
-      new_show_venue_id = request.form.get('venue_id', None)
-      if not new_show_start_time:
-          error_occured = True
-          error_reason = 'No start time specified'
-      if not new_show_artist_id:
-          error_occured = True
-          error_reason = 'No artist specified for the show'
-      if not new_show_venue_id:
-          error_occured = True
-          error_reason = 'No venue specified for the show'
-      artist = Artist.query.get(new_show_artist_id)
-      venue = Venue.query.get(new_show_venue_id)
+      # Get the artist and venue to connect to the show.
+      artist = Artist.query.get(request.form.get('artist_id'))
+      venue = Venue.query.get(request.form.get('venue_id'))
       new_show = Show(
-        start_time = new_show_start_time,
+        start_time = request.form.get('start_time'),
         artist = artist,
         venue = venue
       )
@@ -589,13 +582,13 @@ def create_show_submission():
   except:
       db.session.rollback()
       error_occured = True
-      print(sys.exec_info())
   finally:
       db.session.close()
   if not error_occured:
       # on successful db insert, flash success
       flash('Show was successfully listed!')
-      return jsonify(body)
+      # Redirect to shows listing page
+      return redirect(url_for('shows', response=body))
   else:
       # DONE: on unsuccessful db insert, flash an error instead.
       # e.g., flash('An error occurred. Show could not be listed.')

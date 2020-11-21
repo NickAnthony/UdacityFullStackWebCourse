@@ -84,4 +84,20 @@
 	</div>
 </section>
 
+<div>
+	<button id="delete-venue-button" class="btn btn-danger" onclick="return confirm('Delete venue?');" data-id="{{ venue.id }}">
+		Delete Venue
+	</button>
+</div>
+
+<script>
+  const deleteVenueButton = document.getElementById('delete-venue-button');
+  deleteVenueButton.onclick = function(e) {
+    const venueId = e.target.dataset['id'];
+    fetch('/venues/' + venueId, {
+      method: 'DELETE'
+    })
+  }
+</script>
+
 {% endblock %}
