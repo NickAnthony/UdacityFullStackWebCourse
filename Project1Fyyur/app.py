@@ -5,7 +5,8 @@
 from flask import Flask, render_template, request, Response, flash, redirect, url_for, jsonify
 from flask_migrate import Migrate
 from flask_moment import Moment
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy 
+from sqlalchemy import or_
 from flask_wtf import Form
 from forms import *
 from logging import Formatter, FileHandler
@@ -14,7 +15,6 @@ import datetime
 import dateutil.parser
 import json
 import logging
-import re
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -226,7 +226,10 @@ def search_venues():
   # Do a SQL query using name LIKE %search_term%
   search_term = "%{}%".format(request.form.get('search_term', ''))
   venues = Venue.query.filter(
-    Venue.name.ilike(search_term)
+    or_(
+      Venue.name.ilike(search_term),
+      Venue.city.ilike(search_term)
+    )
   ).all()
   # Create the result response
   for venue in venues:
@@ -512,6 +515,36 @@ def shows():
   for show in shows:
     response.append(show.to_dict())
   return render_template('pages/shows.html', shows=response)
+
+
+@app.route('/shows/search', methods=['POST'])
+def search_shows():
+  # DONE: implement search on shows with partial string search. Ensure it is case-insensitive.
+  # seach for Hop should return "The Musical Hop".
+  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+  response = {
+    "count": 0,
+    "data": []
+  }
+  # Do a SQL query using name LIKE %search_term%
+  search_term = "%{}%".format(request.form.get('search_term', ''))
+  artist_matches = Show.query.join(Show.artist).filter(
+    Artist.name.ilike(search_term)
+  ).all()
+  venue_matches = Show.query.join(Show.venue).filter(
+    Venue.name.ilike(search_term)
+  ).all()
+  venue_matches = Show.query.join(Show.venue).filter(
+    Venue.name.ilike(search_term)
+  ).all()
+  shows = artist_matches + venue_matches
+  # Create the result response
+  for show in shows:
+    response["data"].append(show.to_dict())
+    response["count"] = response["count"] + 1
+  print(response)
+  return render_template('pages/search_shows.html', results=response, search_term=request.form.get('search_term', ''))
+
 
 @app.route('/shows/create')
 def create_shows():

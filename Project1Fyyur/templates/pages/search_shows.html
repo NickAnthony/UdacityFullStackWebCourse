@@ -1,8 +1,9 @@
 {% extends 'layouts/main.html' %}
-{% block title %}Fyyur | Shows{% endblock %}
+{% block title %}Show Search{% endblock %}
 {% block content %}
+<h3>Number of search results for "{{ search_term }}": {{ results.count }}</h3>
 <div class="row shows">
-    {%for show in shows %}
+    {%for show in results.data %}
     <div class="col-sm-4">
         <div class="tile tile-show">
             {% if show.artist_image_link %}
