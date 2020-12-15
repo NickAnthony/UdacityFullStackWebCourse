@@ -12,3 +12,7 @@ instance/
 
 # pytype static type analyzer
 .pytype/
+
+# Dependency directories
+node_modules/
+jspm_packages/
