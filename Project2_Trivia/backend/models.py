@@ -1,6 +1,7 @@
 import os
 from sqlalchemy import Column, String, Integer, create_engine
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import json
 
 database_name = "trivia"
@@ -18,12 +19,15 @@ def setup_db(app, database_path=database_path):
     db.app = app
     db.init_app(app)
     db.create_all()
+    migrate = Migrate(app, db)
+
+
 
 '''
 Question
 
 '''
-class Question(db.Model):  
+class Question(db.Model):
   __tablename__ = 'questions'
 
   id = Column(Integer, primary_key=True)
@@ -41,7 +45,7 @@ class Question(db.Model):
   def insert(self):
     db.session.add(self)
     db.session.commit()
-  
+
   def update(self):
     db.session.commit()
 
@@ -62,7 +66,7 @@ class Question(db.Model):
 Category
 
 '''
-class Category(db.Model):  
+class Category(db.Model):
   __tablename__ = 'categories'
 
   id = Column(Integer, primary_key=True)
