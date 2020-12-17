@@ -39,15 +39,14 @@ def create_app(test_config=None):
         formatted_categories = [c.format() for c in categories]
         return formatted_categories
 
-    @app.route('/categories')
-    @cross_origin()
+    @app.route('/categories', methods=['GET'])
+
     def get_categories():
         # TODO: Implement error handling here
         formatted_categories = get_formatted_categories()
         return jsonify({
             'categories': formatted_categories
         })
-
 
     '''
     @DONE:
@@ -63,14 +62,15 @@ def create_app(test_config=None):
     '''
 
     def paginate_questions(requested_page=1):
+        '''Returns a pagenated list of formated books of size QUESTIONS_PER_PAGE.
+        '''
         start = (requested_page - 1)*QUESTIONS_PER_PAGE
         end = start + QUESTIONS_PER_PAGE
         questions = Question.query.all()
         formatted_questions = [q.format() for q in questions]
         return start, end, formatted_questions
 
-    @app.route('/questions')
-    @cross_origin()
+    @app.route('/questions', methods=['GET'])
     def get_questions():
         requested_page = request.json()['page'] if request.json()['page'] else 1
         # TODO: Implement error handling here
@@ -84,12 +84,28 @@ def create_app(test_config=None):
         })
 
     '''
-    @TODO:
+    @DONE:
     Create an endpoint to DELETE question using a question ID.
 
     TEST: When you click the trash icon next to a question, the question will be removed.
     This removal will persist in the database and when you refresh the page.
     '''
+    @app.route('/questions/${question_id}', methods=['DELETE'])
+    def delete_question(question_id):
+        # TODO: Implement error handling here
+        error_occured = False
+        try:
+            question_to_delete = Question.query.get(question_id)
+            if not question_to_delete:
+                error_occured = True
+                ## TODO: Replace this with abort
+                raise Exception("Venue with id %s not found in the DB" % venue_to_delete)
+            question_to_delete.delete()
+        except:
+            db.session.rollback()
+        finally:
+            db.session.close()
+        return redirect(url_for('/', response=jsonify({ 'success': (not error_occured) })))
 
     '''
     @TODO:
@@ -101,6 +117,44 @@ def create_app(test_config=None):
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab.
     '''
+    @app.route('/questions/create', methods=['POST'])
+    def create_question():
+        error_occured = False
+        request_json = request.get_json()
+        # Implement ERROR handling here for incorrect/incomplete inputs
+        body = {
+            'question': request_json.get('question', ''),
+            'answer': request_json.get('answer', ''),
+            'difficulty': request_json.get('difficulty', 1),
+            'category': request_json.get('category', '')
+        }
+        try:
+            new_question = Question(
+                question = body['question'],
+                answer = body['answer'],
+                difficulty = body['difficulty'],
+                category = body['category']
+            )
+            new_question.insert()
+            # Save the object information in the body.
+            # We can get the id because the object has been flushed.
+            body['id'] = new_question.id
+        except:
+            db.session.rollback()
+            error_occured = True
+        finally:
+            db.session.close()
+
+        if not error_occured:
+            # on successful db insert, flash success
+            flash('Question ' + body['question'] + ' was successfully listed!')
+            # TODO: Revisit if this is actually the URL we want.
+            return redirect(url_for('/', thing_id=body['id'], response=body))
+        else:
+            # TODO: Revisit if this is actually the URL we want.
+            flash('An error occurred. Question ' + body['question'] + ' could not be listed.')
+            return render_template('/')
+
 
     '''
     @TODO:
@@ -112,6 +166,22 @@ def create_app(test_config=None):
     only question that include that string within their question.
     Try using the word "title" to start.
     '''
+    @app.route('/questions/search', methods=['POST'])
+    def search_question():
+        search_term = request.get_json().get('searchTerm', '')
+        # Do a SQL query using question LIKE %search_term%
+        formatted_search_term = "%{}%".format(search_term)
+        # Search questions for the search term.
+        search_results = Question.query.filter(
+            Question.question.ilike(formatted_search_term)
+        ).all()
+        formatted_search_results = [q.format() for q in search_results]
+        start, end, formatted_questions = paginate_questions()
+        return jsonify({
+            'questions': search_results,
+            'totalQuestions': formatted_questions,
+            'currentCategory': categories[0]
+        })
 
     '''
     @TODO:
@@ -121,6 +191,19 @@ def create_app(test_config=None):
     categories in the left column will cause only questions of that
     category to be shown.
     '''
+    @app.route('/categories/${id}/questions', methods=['GET'])
+    def get_questions_for_category(category_id):
+        # Get all question for the given category id
+        questions = db.session.query(Question).join(Category).filter(
+            Category.id == category_id
+        ).all()
+        formatted_search_results = [q.format() for q in search_results]
+        start, end, formatted_questions = paginate_questions()
+        return jsonify({
+            'questions': search_results,
+            'totalQuestions': formatted_questions,
+            'currentCategory': categories[0]
+        })
 
 
     '''
