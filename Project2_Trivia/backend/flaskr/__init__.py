@@ -40,7 +40,6 @@ def create_app(test_config=None):
         return formatted_categories
 
     @app.route('/categories', methods=['GET'])
-
     def get_categories():
         # TODO: Implement error handling here
         formatted_categories = get_formatted_categories()
@@ -73,7 +72,7 @@ def create_app(test_config=None):
 
     @app.route('/questions', methods=['GET'])
     def get_questions():
-        requested_page = request.json()['page'] if request.json()['page'] else 1
+        requested_page = request.get_json().get('page', 1)
         # TODO: Implement error handling here
         start, end, formatted_questions = paginate_questions(requested_page)
         formatted_categories = get_formatted_categories()
@@ -82,7 +81,7 @@ def create_app(test_config=None):
             'questions': formatted_questions[start:end],
             'totalQuestions': formatted_questions,
             'categories': formatted_categories,
-            'currentCategory': categories[0]
+            'currentCategory': categories[0].id
         })
 
     '''
@@ -119,11 +118,12 @@ def create_app(test_config=None):
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab.
     '''
+
     @app.route('/questions/create', methods=['POST'])
     def create_question():
         error_occured = False
         request_json = request.get_json()
-        # Implement ERROR handling here for incorrect/incomplete inputs
+        # TODO: Implement ERROR handling here for incorrect/incomplete inputs
         body = {
             'success': True,
             'question': request_json.get('question', ''),
@@ -132,11 +132,15 @@ def create_app(test_config=None):
             'category': request_json.get('category', '')
         }
         try:
+            category = Category.query.get(category_id).one_or_none()
+            if category is None:
+                # TODO: Throw error
+                return
             new_question = Question(
                 question = body['question'],
                 answer = body['answer'],
                 difficulty = body['difficulty'],
-                category = body['category']
+                category = category
             )
             new_question.insert()
             # Save the object information in the body.
