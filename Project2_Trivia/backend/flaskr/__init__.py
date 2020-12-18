@@ -45,6 +45,7 @@ def create_app(test_config=None):
         # TODO: Implement error handling here
         formatted_categories = get_formatted_categories()
         return jsonify({
+            'success': True,
             'categories': formatted_categories
         })
 
@@ -77,6 +78,7 @@ def create_app(test_config=None):
         start, end, formatted_questions = paginate_questions(requested_page)
         formatted_categories = get_formatted_categories()
         return jsonify({
+            'success': True,
             'questions': formatted_questions[start:end],
             'totalQuestions': formatted_questions,
             'categories': formatted_categories,
@@ -123,6 +125,7 @@ def create_app(test_config=None):
         request_json = request.get_json()
         # Implement ERROR handling here for incorrect/incomplete inputs
         body = {
+            'success': True,
             'question': request_json.get('question', ''),
             'answer': request_json.get('answer', ''),
             'difficulty': request_json.get('difficulty', 1),
@@ -178,6 +181,7 @@ def create_app(test_config=None):
         formatted_search_results = [q.format() for q in search_results]
         start, end, formatted_questions = paginate_questions()
         return jsonify({
+            'success': True,
             'questions': search_results,
             'totalQuestions': formatted_questions,
             'currentCategory': categories[0]
@@ -200,6 +204,7 @@ def create_app(test_config=None):
         formatted_search_results = [q.format() for q in search_results]
         start, end, formatted_questions = paginate_questions()
         return jsonify({
+            'success': True,
             'questions': search_results,
             'totalQuestions': formatted_questions,
             'currentCategory': categories[0]
@@ -248,6 +253,7 @@ def create_app(test_config=None):
         next_question = pick_random_question(potential_next_questions)
 
         return jsonify({
+            'success': True,
             'question': next_question
         })
 
