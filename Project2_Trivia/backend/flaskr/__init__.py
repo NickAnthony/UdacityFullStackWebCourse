@@ -217,6 +217,39 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     '''
+    def pick_random_question(question_list):
+        if len(question_list) <= 0:
+            return None
+        return random.choice(question_list)
+
+    @app.route('/questions/next', methods=['POST'])
+    def get_next_question_in_game(category_id):
+        # Example initial state:
+        #   {'previous_questions': [], 'quiz_category': {'type': 'Science', 'id': 'id'}
+        quiz_category = request.get_json().get('quiz_category', None)
+        select_from_category = None
+        if quiz_category is None:
+            # TODO: Throw error
+            print("quiz_category not provided")
+            return
+        if not quiz_category['type'] or not quiz_category['id']:
+            # TODO: Throw error
+            print("The quiz category type and category id must be provided")
+            return
+
+        previous_questions = request.get_json().get('previous_questions', [])
+
+        potential_next_questions = Question.query.filter_by(
+            category_id=quiz_category['id']
+        ).filter(
+            Question.id.notin_(previous_questions)
+        ).all()
+
+        next_question = pick_random_question(potential_next_questions)
+
+        return jsonify({
+            'question': next_question
+        })
 
     '''
     @TODO:
