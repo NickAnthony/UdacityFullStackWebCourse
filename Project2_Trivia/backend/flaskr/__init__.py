@@ -95,22 +95,20 @@ def create_app(test_config=None):
     TEST: When you click the trash icon next to a question, the question will be removed.
     This removal will persist in the database and when you refresh the page.
     '''
-    @app.route('/questions/${question_id}', methods=['DELETE'])
+    @app.route('/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
         # TODO: Implement error handling here
+        print("-------- delete_question --------")
         error_occured = False
-        try:
-            question_to_delete = Question.query.get(question_id)
-            if not question_to_delete:
-                error_occured = True
-                ## TODO: Replace this with abort
-                raise Exception("Venue with id %s not found in the DB" % venue_to_delete)
-            question_to_delete.delete()
-        except:
-            db.session.rollback()
-        finally:
-            db.session.close()
-        return redirect(url_for('/', response=jsonify({ 'success': (not error_occured) })))
+        question_to_delete = Question.query.get(question_id)
+        if not question_to_delete:
+            error_occured = True
+            ## TODO: Replace this with abort
+            raise Exception("Venue with id %d not found in the DB" % venue_to_delete)
+        question_to_delete.delete()
+        return jsonify({
+            'success': (not error_occured)
+        })
 
     '''
     @TODO:
@@ -203,7 +201,7 @@ def create_app(test_config=None):
     categories in the left column will cause only questions of that
     category to be shown.
     '''
-    @app.route('/categories/${id}/questions', methods=['GET'])
+    @app.route('/categories/<int:category_id>/questions', methods=['GET'])
     def get_questions_for_category(category_id):
         # Get all question for the given category id
         questions = db.session.query(Question).join(Category).filter(
