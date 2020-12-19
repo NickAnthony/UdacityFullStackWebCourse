@@ -168,12 +168,13 @@ def create_app(test_config=None):
             Question.question.ilike(formatted_search_term)
         ).all()
         formatted_search_results = [q.format() for q in search_results]
-        start, end, formatted_questions = paginate_questions()
+        _, _, formatted_questions = paginate_questions()
+        default_category = Category.query.first()
         return jsonify({
             'success': True,
-            'questions': search_results,
+            'questions': formatted_search_results,
             'totalQuestions': formatted_questions,
-            'currentCategory': categories[0]
+            'currentCategory': default_category.id
         })
 
     '''

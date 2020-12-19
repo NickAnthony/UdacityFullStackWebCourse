@@ -167,7 +167,45 @@ class TriviaTestCase(unittest.TestCase):
 		self.assertTrue(question_exists)
 
 	'''Testing '/questions/search' POST endpoint '''
+
+	def test_no_results_search_succeeds(self):
+		res = self.client().post('/questions/search', json={
+			'searchTerm': 'supercalifragilisticexpialidocious'
+		})
+		data = json.loads(res.data)
+
+		self.assertEqual(res.status_code, 200)
+		self.assertEqual(data['success'], True)
+		self.assertEqual(len(data['questions']), 0)
+		self.assertEqual(len(data['totalQuestions']), 19)
+		self.assertEqual(data['currentCategory'], 1)
+
+	def test_empty_search_returns_all_questions(self):
+		res = self.client().post('/questions/search', json={
+			'searchTerm': ''
+		})
+		data = json.loads(res.data)
+
+		self.assertEqual(res.status_code, 200)
+		self.assertEqual(data['success'], True)
+		self.assertEqual(len(data['questions']), 19)
+		self.assertEqual(len(data['totalQuestions']), 19)
+		self.assertEqual(data['currentCategory'], 1)
+
+	def test_simple_search_questions_succeeds(self):
+		res = self.client().post('/questions/search', json={
+			'searchTerm': 'soccer'
+		})
+		data = json.loads(res.data)
+
+		self.assertEqual(res.status_code, 200)
+		self.assertEqual(data['success'], True)
+		self.assertEqual(len(data['questions']), 2)
+		self.assertEqual(len(data['totalQuestions']), 19)
+		self.assertEqual(data['currentCategory'], 1)
+
 	'''Testing '/categories/${id}/questions' GET endpoint '''
+
 	'''Testing '/questions/next' POST endpoint '''
 
 
