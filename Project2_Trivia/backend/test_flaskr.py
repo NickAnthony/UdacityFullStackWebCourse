@@ -206,6 +206,39 @@ class TriviaTestCase(unittest.TestCase):
 
 	'''Testing '/categories/${id}/questions' GET endpoint '''
 
+	def test_get_questions_in_category_succeeds(self):
+		res = self.client().get('/categories/1/questions')
+		data = json.loads(res.data)
+		self.assertEqual(res.status_code, 200)
+		self.assertEqual(data['success'], True)
+		self.assertEqual(len(data['questions']), 3)
+		self.assertEqual(len(data['totalQuestions']), 19)
+		self.assertEqual(data['currentCategory'], 1)
+
+		res = self.client().get('/categories/2/questions')
+		data = json.loads(res.data)
+		self.assertEqual(res.status_code, 200)
+		self.assertEqual(data['success'], True)
+		self.assertEqual(len(data['questions']), 4)
+		self.assertEqual(len(data['totalQuestions']), 19)
+		self.assertEqual(data['currentCategory'], 2)
+
+		res = self.client().get('/categories/3/questions')
+		data = json.loads(res.data)
+		self.assertEqual(res.status_code, 200)
+		self.assertEqual(data['success'], True)
+		self.assertEqual(len(data['questions']), 3)
+		self.assertEqual(len(data['totalQuestions']), 19)
+		self.assertEqual(data['currentCategory'], 3)
+
+		res = self.client().get('/categories/6/questions')
+		data = json.loads(res.data)
+		self.assertEqual(res.status_code, 200)
+		self.assertEqual(data['success'], True)
+		self.assertEqual(len(data['questions']), 2)
+		self.assertEqual(len(data['totalQuestions']), 19)
+		self.assertEqual(data['currentCategory'], 6)
+
 	'''Testing '/questions/next' POST endpoint '''
 
 

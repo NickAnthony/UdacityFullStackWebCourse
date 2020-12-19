@@ -187,17 +187,17 @@ def create_app(test_config=None):
     '''
     @app.route('/categories/<int:category_id>/questions', methods=['GET'])
     def get_questions_for_category(category_id):
-        # Get all question for the given category id
-        questions = db.session.query(Question).join(Category).filter(
-            Category.id == category_id
+        # Get all questions for the given category id
+        category_questions = Question.query.filter(
+            Question.category == category_id
         ).all()
-        formatted_search_results = [q.format() for q in search_results]
-        start, end, formatted_questions = paginate_questions()
+        formatted_category_questions = [q.format() for q in category_questions]
+        _, _, formatted_questions = paginate_questions()
         return jsonify({
             'success': True,
-            'questions': search_results,
+            'questions': formatted_category_questions,
             'totalQuestions': formatted_questions,
-            'currentCategory': categories[0]
+            'currentCategory': category_id
         })
 
 
