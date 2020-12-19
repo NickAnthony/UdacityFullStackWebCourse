@@ -143,26 +143,26 @@ class TriviaTestCase(unittest.TestCase):
 	'''Testing '/questions/create' POST endpoint '''
 
 	def test_create_questions_succeeds(self):
-		res = self.client().get('/questions/create', json={
-			'question': self.new_question.question,
-			'answer': self.new_question.answer,
-			'difficulty': self.new_question.difficulty,
-			'category': self.new_question.category
+		res = self.client().post('/questions/create', json={
+			'question': self.new_question['question'],
+			'answer': self.new_question['answer'],
+			'difficulty': self.new_question['difficulty'],
+			'category': self.new_question['category']
 		})
 		data = json.loads(res.data)
 
 		self.assertEqual(res.status_code, 200)
 		self.assertEqual(data['success'], True)
 		# Assert the question was inserted
-		self.assertEqual(data['question'], self.new_question.question)
-		self.assertEqual(data['answer'], self.new_question.answer)
-		self.assertEqual(data['difficulty'], self.new_question.difficulty)
-		self.assertEqual(data['category'], self.new_question.category)
+		self.assertEqual(data['question'], self.new_question['question'])
+		self.assertEqual(data['answer'], self.new_question['answer'])
+		self.assertEqual(data['difficulty'], self.new_question['difficulty'])
+		self.assertEqual(data['category'], self.new_question['category'])
 		res = self.client().get('/questions')
 		data = json.loads(res.data)
 		question_exists = False
 		for question in data['totalQuestions']:
-			if question['question'] == self.new_question.question:
+			if question['question'] == self.new_question['question']:
 				question_exists = True
 		self.assertTrue(question_exists)
 

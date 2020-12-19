@@ -126,43 +126,26 @@ def create_app(test_config=None):
         error_occured = False
         request_json = request.get_json()
         # TODO: Implement ERROR handling here for incorrect/incomplete inputs
-        body = {
+        category = Category.query.get(request_json.get('category', 1))
+        if category is None:
+            # TODO: Throw error
+            return
+        new_question = Question(
+            question = request_json.get('question', ''),
+            answer = request_json.get('answer', ''),
+            difficulty = request_json.get('difficulty', 1),
+            category = category.id
+        )
+        new_question.insert()
+        # We can get the id because the object has been flushed.
+        return jsonify({
             'success': True,
-            'question': request_json.get('question', ''),
-            'answer': request_json.get('answer', ''),
-            'difficulty': request_json.get('difficulty', 1),
-            'category': request_json.get('category', '')
-        }
-        try:
-            category = Category.query.get(category_id).one_or_none()
-            if category is None:
-                # TODO: Throw error
-                return
-            new_question = Question(
-                question = body['question'],
-                answer = body['answer'],
-                difficulty = body['difficulty'],
-                category = category
-            )
-            new_question.insert()
-            # Save the object information in the body.
-            # We can get the id because the object has been flushed.
-            body['id'] = new_question.id
-        except:
-            db.session.rollback()
-            error_occured = True
-        finally:
-            db.session.close()
-
-        if not error_occured:
-            # on successful db insert, flash success
-            flash('Question ' + body['question'] + ' was successfully listed!')
-            # TODO: Revisit if this is actually the URL we want.
-            return redirect(url_for('/', thing_id=body['id'], response=body))
-        else:
-            # TODO: Revisit if this is actually the URL we want.
-            flash('An error occurred. Question ' + body['question'] + ' could not be listed.')
-            return render_template('/')
+            'question': new_question.question,
+            'answer': new_question.answer,
+            'difficulty': new_question.difficulty,
+            'category': new_question.category,
+            'id': new_question.id
+        })
 
 
     '''
