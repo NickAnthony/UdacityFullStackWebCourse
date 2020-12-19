@@ -63,7 +63,7 @@ class TriviaTestCase(unittest.TestCase):
 	'''Testing '/questions' GET endpoint '''
 
 	def test_default_get_questions_succeeds(self):
-		res = self.client().get('/questions', json)
+		res = self.client().get('/questions')
 		data = json.loads(res.data)
 
 		self.assertEqual(res.status_code, 200)

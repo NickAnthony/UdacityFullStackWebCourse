@@ -85,7 +85,7 @@ def create_app(test_config=None):
             'questions': formatted_questions[start:end],
             'totalQuestions': formatted_questions,
             'categories': formatted_categories,
-            'currentCategory': categories[0].id
+            'currentCategory': formatted_categories[0]['id']
         })
 
     '''
