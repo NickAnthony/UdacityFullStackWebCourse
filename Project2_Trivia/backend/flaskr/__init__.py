@@ -72,7 +72,11 @@ def create_app(test_config=None):
 
     @app.route('/questions', methods=['GET'])
     def get_questions():
-        requested_page = request.get_json().get('page', 1)
+        # Handle cases where no json is even passed
+        if not request.get_json():
+            requested_page = 1
+        else:
+            requested_page = request.get_json().get('page', 1)
         # TODO: Implement error handling here
         start, end, formatted_questions = paginate_questions(requested_page)
         formatted_categories = get_formatted_categories()
