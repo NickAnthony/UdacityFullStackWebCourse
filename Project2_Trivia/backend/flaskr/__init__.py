@@ -218,7 +218,7 @@ def create_app(test_config=None):
         return random.choice(question_list)
 
     @app.route('/questions/next', methods=['POST'])
-    def get_next_question_in_game(category_id):
+    def get_next_question_in_game():
         # Example initial state:
         #   {'previous_questions': [], 'quiz_category': {'type': 'Science', 'id': 'id'}
         quiz_category = request.get_json().get('quiz_category', None)
@@ -233,18 +233,19 @@ def create_app(test_config=None):
             return
 
         previous_questions = request.get_json().get('previous_questions', [])
-
-        potential_next_questions = Question.query.filter_by(
-            category_id=quiz_category['id']
+        potential_next_questions = Question.query.filter(
+            Question.category == quiz_category['id']
         ).filter(
             Question.id.notin_(previous_questions)
         ).all()
 
         next_question = pick_random_question(potential_next_questions)
+        # Account for a NULL next question
+        next_question_formatted = next_question.format() if next_question else None
 
         return jsonify({
             'success': True,
-            'question': next_question
+            'question': next_question_formatted
         })
 
     '''

@@ -241,6 +241,51 @@ class TriviaTestCase(unittest.TestCase):
 
 	'''Testing '/questions/next' POST endpoint '''
 
+	def question_was_previously_returned(self, question, previous_questions):
+		for prev_question_id in previous_questions:
+			if question['id'] == prev_question_id:
+				return True
+		return False
+
+	def test_get_questions_in_category_succeeds(self):
+		category = {
+			'type': 'Art',
+			'id': 2
+		}
+		res = self.client().get('/categories/%d/questions' % (category['id']))
+		data = json.loads(res.data)
+		previous_questions = []
+		num_questions_in_catgeory = len(data['questions'])
+		for i in range(num_questions_in_catgeory):
+			res = self.client().post('/questions/next', json={
+				'previous_questions': previous_questions,
+				'quiz_category': {
+					'type': category['type'],
+					'id': category['id']
+				}
+			})
+			data = json.loads(res.data)
+			self.assertEqual(res.status_code, 200)
+			self.assertEqual(data['success'], True)
+			self.assertTrue(data['question'])
+			self.assertFalse(self.question_was_previously_returned(
+				data['question'],
+				previous_questions
+			))
+			previous_questions.append(data['question']['id'])
+
+		# Assert the next call returns no questions
+		res = self.client().post('/questions/next', json={
+			'previous_questions': previous_questions,
+			'quiz_category': {
+				'type': category['type'],
+				'id': category['id']
+			}
+		})
+		data = json.loads(res.data)
+		self.assertEqual(res.status_code, 200)
+		self.assertEqual(data['success'], True)
+		self.assertFalse(data['question'], 0)
 
 
 # Make the tests conveniently executable
