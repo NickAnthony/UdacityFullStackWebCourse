@@ -239,6 +239,15 @@ class TriviaTestCase(unittest.TestCase):
 		self.assertEqual(len(data['totalQuestions']), 19)
 		self.assertEqual(data['currentCategory'], 6)
 
+	def test_get_questions_in_all_categories_succeeds(self):
+		res = self.client().get('/categories/0/questions')
+		data = json.loads(res.data)
+		self.assertEqual(res.status_code, 200)
+		self.assertEqual(data['success'], True)
+		self.assertEqual(len(data['questions']), 19)
+		self.assertEqual(len(data['totalQuestions']), 19)
+		self.assertEqual(data['currentCategory'], 0)
+
 	'''Testing '/questions/next' POST endpoint '''
 
 	def question_was_previously_returned(self, question, previous_questions):

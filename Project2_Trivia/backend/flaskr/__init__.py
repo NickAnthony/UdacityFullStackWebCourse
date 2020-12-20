@@ -36,8 +36,13 @@ def create_app(test_config=None):
     '''
     def get_formatted_categories():
         categories = Category.query.all()
-        formatted_categories = [c.format() for c in categories]
+        formatted_categories = {c.id:c.type for c in categories}
         return formatted_categories
+
+    def get_default_category():
+        categories = Category.query.all()
+        default_category = categories[0].id if categories else None
+        return default_category
 
     @app.route('/categories', methods=['GET'])
     def get_categories():
@@ -80,7 +85,7 @@ def create_app(test_config=None):
         # TODO: Implement error handling here
         start, end, formatted_questions = paginate_questions(requested_page)
         formatted_categories = get_formatted_categories()
-        default_current_category = formatted_categories[0]['id'] if formatted_categories else None
+        default_current_category = get_default_category()
         return jsonify({
             'success': True,
             'questions': formatted_questions[start:end],
@@ -170,12 +175,12 @@ def create_app(test_config=None):
         ).all()
         formatted_search_results = [q.format() for q in search_results]
         _, _, formatted_questions = paginate_questions()
-        default_category = Category.query.first()
+        default_current_category = get_default_category()
         return jsonify({
             'success': True,
             'questions': formatted_search_results,
             'totalQuestions': formatted_questions,
-            'currentCategory': default_category.id
+            'currentCategory': default_current_category
         })
 
     '''
@@ -188,10 +193,14 @@ def create_app(test_config=None):
     '''
     @app.route('/categories/<int:category_id>/questions', methods=['GET'])
     def get_questions_for_category(category_id):
-        # Get all questions for the given category id
-        category_questions = Question.query.filter(
-            Question.category == category_id
-        ).all()
+        if category_id == 0:
+            # Get all questions - this is the "ALL" category
+            category_questions = Question.query.all()
+        else:
+            # Get all questions for the given category id
+            category_questions = Question.query.filter(
+                Question.category == category_id
+            ).all()
         formatted_category_questions = [q.format() for q in category_questions]
         _, _, formatted_questions = paginate_questions()
         return jsonify({
