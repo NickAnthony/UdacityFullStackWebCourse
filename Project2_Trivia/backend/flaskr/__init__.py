@@ -80,12 +80,13 @@ def create_app(test_config=None):
         # TODO: Implement error handling here
         start, end, formatted_questions = paginate_questions(requested_page)
         formatted_categories = get_formatted_categories()
+        default_current_category = formatted_categories[0]['id'] if formatted_categories else None
         return jsonify({
             'success': True,
             'questions': formatted_questions[start:end],
             'totalQuestions': formatted_questions,
             'categories': formatted_categories,
-            'currentCategory': formatted_categories[0]['id']
+            'currentCategory': default_current_category
         })
 
     '''
