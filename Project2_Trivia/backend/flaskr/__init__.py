@@ -89,9 +89,9 @@ def create_app(test_config=None):
         return jsonify({
             'success': True,
             'questions': formatted_questions[start:end],
-            'totalQuestions': formatted_questions,
+            'total_questions': len(formatted_questions),
             'categories': formatted_categories,
-            'currentCategory': default_current_category
+            'current_category': default_current_category
         })
 
     '''
@@ -104,7 +104,6 @@ def create_app(test_config=None):
     @app.route('/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
         # TODO: Implement error handling here
-        print("-------- delete_question --------")
         error_occured = False
         question_to_delete = Question.query.get(question_id)
         if not question_to_delete:
@@ -174,13 +173,13 @@ def create_app(test_config=None):
             Question.question.ilike(formatted_search_term)
         ).all()
         formatted_search_results = [q.format() for q in search_results]
-        _, _, formatted_questions = paginate_questions()
+        total_questions = len(Question.query.all())
         default_current_category = get_default_category()
         return jsonify({
             'success': True,
             'questions': formatted_search_results,
-            'totalQuestions': formatted_questions,
-            'currentCategory': default_current_category
+            'total_questions': total_questions,
+            'current_category': default_current_category
         })
 
     '''
@@ -194,7 +193,7 @@ def create_app(test_config=None):
     @app.route('/categories/<int:category_id>/questions', methods=['GET'])
     def get_questions_for_category(category_id):
         if category_id == 0:
-            # Get all questions - this is the "ALL" category
+            # Get all questions - this is the "ALL"
             category_questions = Question.query.all()
         else:
             # Get all questions for the given category id
@@ -203,11 +202,12 @@ def create_app(test_config=None):
             ).all()
         formatted_category_questions = [q.format() for q in category_questions]
         _, _, formatted_questions = paginate_questions()
+        total_questions = len(Question.query.all())
         return jsonify({
             'success': True,
             'questions': formatted_category_questions,
-            'totalQuestions': formatted_questions,
-            'currentCategory': category_id
+            'total_questions': total_questions,
+            'current_category': category_id
         })
 
 
