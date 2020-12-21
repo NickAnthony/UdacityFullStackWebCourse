@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import $ from 'jquery';
+import Fuse from 'fuse.js';
 
 import '../stylesheets/QuizView.css';
 
@@ -132,12 +133,24 @@ class QuizView extends Component {
 
   evaluateAnswer = () => {
     const formatGuess = this.state.guess.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase()
-    const answerArray = this.state.currentQuestion.answer.toLowerCase().split(' ');
-    return answerArray.includes(formatGuess)
+    console.log(`formatGuess: ${formatGuess}`)
+    const answerArray = this.state.currentQuestion.answer.toLowerCase();
+    console.log(`answerArray: ${answerArray}`)
+
+    var answerIsCorrect = answerArray.includes(formatGuess)
+    if (!answerIsCorrect) {
+      console.log(`Using Fuse`)
+      const fuseAnswerArray = new Fuse([this.state.currentQuestion.answer.toLowerCase()])
+      const fuseMatch = fuseAnswerArray.search(formatGuess)
+      console.log(`Fuse results: ${fuseMatch}`)
+      if (fuseMatch.length !== 0) {
+        answerIsCorrect = true
+      }
+    }
+    return answerIsCorrect
   }
 
   renderCorrectAnswer(){
-    const formatGuess = this.state.guess.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase()
     let evaluate =  this.evaluateAnswer()
     return(
       <div className="quiz-play-holder">
