@@ -80,7 +80,6 @@ class QuizView extends Component {
 
   submitGuess = (event) => {
     event.preventDefault();
-    const formatGuess = this.state.guess.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase()
     let evaluate =  this.evaluateAnswer()
     this.setState({
       numCorrect: !evaluate ? this.state.numCorrect : this.state.numCorrect + 1,
@@ -133,16 +132,13 @@ class QuizView extends Component {
 
   evaluateAnswer = () => {
     const formatGuess = this.state.guess.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase()
-    console.log(`formatGuess: ${formatGuess}`)
     const answerArray = this.state.currentQuestion.answer.toLowerCase();
-    console.log(`answerArray: ${answerArray}`)
 
     var answerIsCorrect = answerArray.includes(formatGuess)
+    // Direct search didn't return true, so try a fuzzy match
     if (!answerIsCorrect) {
-      console.log(`Using Fuse`)
       const fuseAnswerArray = new Fuse([this.state.currentQuestion.answer.toLowerCase()])
       const fuseMatch = fuseAnswerArray.search(formatGuess)
-      console.log(`Fuse results: ${fuseMatch}`)
       if (fuseMatch.length !== 0) {
         answerIsCorrect = true
       }
