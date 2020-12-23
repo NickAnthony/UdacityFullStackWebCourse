@@ -88,7 +88,7 @@ def create_app(test_config=None):
             requested_page = request.get_json().get('page', 1)
 
         start, end, formatted_questions = paginate_questions(requested_page)
-        if start >= len(formatted_questions):
+        if start >= len(formatted_questions) or start < 0:
             abort(404)
         try:
             formatted_categories = get_formatted_categories()
