@@ -260,6 +260,8 @@ def create_app(test_config=None):
     and shown whether they were correct or not.
     '''
     def pick_random_question(question_list):
+        '''Picks a random question from the question_list.
+        '''
         if len(question_list) <= 0:
             return None
         return random.choice(question_list)
@@ -269,32 +271,41 @@ def create_app(test_config=None):
         # Example initial state:
         #   {'previous_questions': [], 'quiz_category': {'type': 'Science', 'id': 'id'}
         quiz_category = request.get_json().get('quiz_category', None)
+        # Check that a quiz_category was provided and it has an id
         if (quiz_category is None or
-            not quiz_category['type'] or
-            not quiz_category['id']):
+            quiz_category['id'] is None):
             abort(400)
 
-        if not Category.query.get(quiz_category['id']):
-            abort(404)
-
+        error_code = None
         previous_questions = request.get_json().get('previous_questions', [])
         try:
-            potential_next_questions = Question.query.filter(
-                Question.category == quiz_category['id']
-            ).filter(
-                Question.id.notin_(previous_questions)
-            ).all()
+            # Quiz category of 0 means ALL questions
+            if quiz_category['id'] == 0:
+                potential_next_questions = Question.query.filter(
+                    Question.id.notin_(previous_questions)
+                ).all()
+            else:
+                # Check that category exists
+                if not Category.query.get(quiz_category['id']):
+                    error_code = 404
+                # Category exists, get the next potential questions
+                potential_next_questions = Question.query.filter(
+                    Question.category == quiz_category['id']
+                ).filter(
+                    Question.id.notin_(previous_questions)
+                ).all()
 
             next_question = pick_random_question(potential_next_questions)
-            # Account for a NULL next question
+            # Account for a NULL next question, which means the quiz is over
             next_question_formatted = next_question.format() if next_question else None
-
+            if error_code:
+                abort(error_code)
             return jsonify({
                 'success': True,
                 'question': next_question_formatted
             })
         except:
-            abort(422)
+            abort(error_code if error_code else 422)
 
     '''
     @DONE:
@@ -332,5 +343,13 @@ def create_app(test_config=None):
             "error": 422,
             "message": "Unprocessable"
         }), 422
+
+    @app.errorhandler(500)
+    def unprocessable(error):
+        return jsonify({
+            "success": False,
+            "error": 500,
+            "message": "Internal server error"
+        }), 500
 
     return app

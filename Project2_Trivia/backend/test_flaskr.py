@@ -414,6 +414,19 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertFalse(data['question'], 0)
 
+    def test_get_questions_in_category_returns_all_succeeds(self):
+        res = self.client().post('/questions/next', json={
+            'previous_questions': [],
+            'quiz_category': {
+                'type': '',
+                'id': 0
+            }
+        })
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['question'])
+
     def test_play_game_throws_400_for_null_category(self):
         res = self.client().post('/questions/next', json={
             'previous_questions': [],
