@@ -135,8 +135,13 @@ class QuizView extends Component {
     const answerArray = this.state.currentQuestion.answer.toLowerCase();
 
     var answerIsCorrect = answerArray.includes(formatGuess)
+    // Check for empty strings
+    if (formatGuess.length === 0 || !formatGuess.trim()) {
+      answerIsCorrect = false
+    }
     // Direct search didn't return true, so try a fuzzy match
     if (!answerIsCorrect) {
+      console.log("formatGuess:" + formatGuess)
       const fuseAnswerArray = new Fuse([this.state.currentQuestion.answer.toLowerCase()])
       const fuseMatch = fuseAnswerArray.search(formatGuess)
       if (fuseMatch.length !== 0) {
