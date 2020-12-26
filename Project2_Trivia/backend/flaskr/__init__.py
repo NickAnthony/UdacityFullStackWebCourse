@@ -116,9 +116,11 @@ def create_app(test_config=None):
         if not question_to_delete:
             abort(404)
         try:
+            question_id_to_delete = question_to_delete.id
             question_to_delete.delete()
             return jsonify({
-                'success': True
+                'success': True,
+                'id': question_id_to_delete
             })
         except:
             abort(422)

@@ -158,6 +158,7 @@ class TriviaTestCase(unittest.TestCase):
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
+        self.assertEqual(data['id'], new_question_id)
 
         # Check question does NOT exists after deletion
         res = self.client().get('/categories/0/questions')
