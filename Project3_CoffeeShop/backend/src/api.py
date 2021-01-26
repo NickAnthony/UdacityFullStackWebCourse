@@ -20,7 +20,7 @@ db_drop_and_create_all()
 
 ## ROUTES
 '''
-@TODO implement endpoint
+@DONE implement endpoint
     GET /drinks
         it should be a public endpoint
         it should contain only the drink.short() data representation
@@ -31,8 +31,10 @@ db_drop_and_create_all()
 @requires_auth('get:drinks-detail')
 def get_drinks(payload):
     drinks = Drink.query.all()
+    # If there are no drinks, throw a 404
+    if not drinks:
+        abort(404)
     formatted_drinks = [drink.short() for drink in drinks]
-    if
     return jsonify({
                 'success': True,
                 'drinks': formatted_drinks
