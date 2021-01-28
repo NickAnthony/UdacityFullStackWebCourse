@@ -115,7 +115,7 @@ def add_new_drink(payload):
         abort(422)
 
 '''
-@TODO implement endpoint
+@DONE implement endpoint
     PATCH /drinks/<id>
         where <id> is the existing model id
         it should respond with a 404 error if <id> is not found
@@ -125,7 +125,45 @@ def add_new_drink(payload):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks/<int:drink_id>', methods=['PATCH'])
+@requires_auth('patch:drinks')
+def add_new_drink(drink_id):
+    # Json payload is of the format:
+    # { "title": title.
+    #   "recipe": [{
+    #     "name": name (string),
+    #     "parts": parts (number),
+    #     "color": color (string)
+    #   },]}
+    drink = Drink.query.filter(Drink.id == id).one_or_none()
+    if not drink:
+        abort(404)
 
+    title = request.get_json().get('title', None)
+    recipe = request.get_json().get('recipe', []])
+    # Verify that the title and recipe exist
+    if (title is None or
+        len(recipe) == 0):
+        abort(400)
+
+    try:
+        # Verify recipe works.  Do so in a try/catch in case of key errors
+        for piece in recipe:
+            if not piece['name'] or not piece['parts'] or not piece['color']:
+                abort(400)
+            if piece['parts'] < 1:
+                abort(400)
+        drink.title = title
+        drink.recipe = recipe
+        drink.update()
+        # We can get the id of the new_drink because it has been flushed.
+        return jsonify({
+            'success': True,
+            'id': new_drink.id,
+            'drinks': format_drinks_long([drink])
+        })
+    except:
+        abort(422)
 
 '''
 @TODO implement endpoint
