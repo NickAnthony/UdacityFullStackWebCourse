@@ -18,6 +18,13 @@ CORS(app)
 '''
 db_drop_and_create_all()
 
+## UTILS
+
+def format_drinks_short(drinks):
+    return [drink.short() for drink in drinks]
+def format_drinks_long(drinks):
+    return [drink.long() for drink in drinks]
+
 ## ROUTES
 '''
 @DONE implement endpoint
@@ -33,10 +40,9 @@ def get_drinks(payload):
     # If there are no drinks, throw a 404
     if not drinks:
         abort(404)
-    formatted_drinks = [drink.short() for drink in drinks]
     return jsonify({
                 'success': True,
-                'drinks': formatted_drinks
+                'drinks': format_drinks_short(drinks)
             })
 
 '''
@@ -54,14 +60,13 @@ def get_drinks_details(payload):
     # If there are no drinks, throw a 404
     if not drinks:
         abort(404)
-    formatted_drinks = [drink.long() for drink in drinks]
     return jsonify({
                 'success': True,
-                'drinks': formatted_drinks
+                'drinks': format_drinks_long(drinks)
             })
 
 '''
-@TODO implement endpoint
+@DONE implement endpoint
     POST /drinks
         it should create a new row in the drinks table
         it should require the 'post:drinks' permission
@@ -69,7 +74,45 @@ def get_drinks_details(payload):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks', methods=['POST'])
+@requires_auth('post:drinks')
+def add_new_drink(payload):
+    # Json payload is of the format:
+    # { "title": title.
+    #   "recipe": [{
+    #     "name": name (string),
+    #     "parts": parts (number),
+    #     "color": color (string)
+    #   },]}
+    title = request.get_json().get('title', None)
+    recipe = request.get_json().get('recipe', []])
 
+    # Verify that the title and recipe exist
+    if (title is None or
+        len(recipe) == 0):
+        abort(400)
+
+    try:
+        # Verify recipe works.  Do so in a try/catch in case of key errors
+        for piece in recipe:
+            if not piece['name'] or not piece['parts'] or not piece['color']:
+                abort(400)
+            if piece['parts'] < 1:
+                abort(400)
+
+        new_drink = Drink(
+            title = title,
+            recipe = recipe
+        )
+        new_drink.insert()
+        # We can get the id of the new_drink because it has been flushed.
+        return jsonify({
+            'success': True,
+            'id': new_drink.id,
+            'drinks': format_drinks_long([new_drink])
+        })
+    except:
+        abort(422)
 
 '''
 @TODO implement endpoint
