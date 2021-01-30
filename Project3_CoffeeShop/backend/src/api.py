@@ -166,7 +166,7 @@ def add_new_drink(drink_id):
         abort(422)
 
 '''
-@TODO implement endpoint
+@DONE implement endpoint
     DELETE /drinks/<id>
         where <id> is the existing model id
         it should respond with a 404 error if <id> is not found
@@ -175,7 +175,21 @@ def add_new_drink(drink_id):
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
-
+@app.route('/drinks/<int:drink_id>', methods=['DELETE'])
+@requires_auth('delete:drinks')
+def delete_drink(drink_id):
+    drink_to_delete = Drink.query.get(drink_id)
+    if not drink_to_delete:
+        abort(404)
+    try:
+        drink_to_delete_id = drink_to_delete.id
+        drink_to_delete.delete()
+        return jsonify({
+            'success': True,
+            'delete': drink_to_delete_id
+        })
+    except:
+        abort(422)
 
 ## Error Handling
 '''
