@@ -35,7 +35,7 @@ def format_drinks_long(drinks):
         or appropriate status code indicating reason for failure
 '''
 @app.route('/drinks', methods=['GET'])
-def get_drinks(payload):
+def get_drinks():
     drinks = Drink.query.all()
     # If there are no drinks, throw a 404
     if not drinks:
@@ -85,7 +85,7 @@ def add_new_drink(payload):
     #     "color": color (string)
     #   },]}
     title = request.get_json().get('title', None)
-    recipe = request.get_json().get('recipe', []])
+    recipe = request.get_json().get('recipe', [])
 
     # Verify that the title and recipe exist
     if (title is None or
@@ -127,7 +127,7 @@ def add_new_drink(payload):
 '''
 @app.route('/drinks/<int:drink_id>', methods=['PATCH'])
 @requires_auth('patch:drinks')
-def add_new_drink(drink_id):
+def modify_exiting_drink(drink_id):
     # Json payload is of the format:
     # { "title": title.
     #   "recipe": [{
@@ -140,7 +140,7 @@ def add_new_drink(drink_id):
         abort(404)
 
     title = request.get_json().get('title', None)
-    recipe = request.get_json().get('recipe', []])
+    recipe = request.get_json().get('recipe', [])
     # Verify that the title and recipe exist
     if (title is None or
         len(recipe) == 0):
@@ -265,11 +265,9 @@ def unprocessable(error):
 '''
 @app.errorhandler(AuthError)
 def handle_auth_error(e):
-    # Get the original AuthError code
-    original_error = e.get_response()
     return jsonify({
         "success": False,
-        "error": original_error.code,
-        "code": original_error.code,
-        "message": original_error.description,
-    }), original_error.code
+        "error": e.error['code'],
+        "code": e.status_code,
+        "message": e.error['description'],
+    }), e.status_code
