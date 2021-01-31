@@ -26,8 +26,10 @@ db_drop_and_create_all()
     !!NOTE you can change the database_filename variable to have multiple verisons of a database
 '''
 def db_drop_and_create_all():
+    print("DROPPING DB AND CREATING ALL... ", end='')
     db.drop_all()
     db.create_all()
+    print("Done.", flush=True)
 
 '''
 Drink

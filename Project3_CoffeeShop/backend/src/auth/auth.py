@@ -1,5 +1,5 @@
 import json
-from flask import request, _request_ctx_stack
+from flask import request, _request_ctx_stack, abort, jsonify
 from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
@@ -108,7 +108,6 @@ def verify_decode_jwt(token):
     unverified_header = jwt.get_unverified_header(token)
     rsa_key = {}
     if 'kid' not in unverified_header:
-        abort(401)
         raise AuthError({
             'code': 'invalid_header',
             'description': 'Authorization malformed.'
@@ -174,6 +173,13 @@ def requires_auth(permission=''):
             token = get_token_auth_header()
             try:
                 payload = verify_decode_jwt(token)
+            except AuthError as e:
+                return jsonify({
+                    "success": False,
+                    "error": e.error['code'],
+                    "code": e.status_code,
+                    "message": e.error['description'],
+                }), 401
             except:
                 abort(401)
             check_permissions(permission, payload)

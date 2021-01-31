@@ -16,7 +16,7 @@ CORS(app)
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 '''
-db_drop_and_create_all()
+# db_drop_and_create_all()
 
 ## UTILS
 
@@ -84,12 +84,13 @@ def add_new_drink(payload):
     #     "parts": parts (number),
     #     "color": color (string)
     #   },]}
+    if not request.get_json():
+        abort(400)
     title = request.get_json().get('title', None)
     recipe = request.get_json().get('recipe', [])
 
     # Verify that the title and recipe exist
-    if (title is None or
-        len(recipe) == 0):
+    if (not title or not recipe):
         abort(400)
 
     try:
@@ -102,7 +103,7 @@ def add_new_drink(payload):
 
         new_drink = Drink(
             title = title,
-            recipe = recipe
+            recipe = json.dumps(recipe)
         )
         new_drink.insert()
         # We can get the id of the new_drink because it has been flushed.
@@ -127,7 +128,7 @@ def add_new_drink(payload):
 '''
 @app.route('/drinks/<int:drink_id>', methods=['PATCH'])
 @requires_auth('patch:drinks')
-def modify_exiting_drink(drink_id):
+def modify_exiting_drink(payload, drink_id):
     # Json payload is of the format:
     # { "title": title.
     #   "recipe": [{
@@ -135,16 +136,20 @@ def modify_exiting_drink(drink_id):
     #     "parts": parts (number),
     #     "color": color (string)
     #   },]}
-    drink = Drink.query.filter(Drink.id == id).one_or_none()
-    if not drink:
-        abort(404)
+    try:
+        drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+        if not drink:
+            abort(404)
+    except:
+        abort(422)
 
-    title = request.get_json().get('title', None)
-    recipe = request.get_json().get('recipe', [])
-    # Verify that the title and recipe exist
-    if (title is None or
-        len(recipe) == 0):
+    # Verify that either one of title and recipe exist
+    if (not request.get_json().get('title') and
+        not request.get_json().get('recipe')):
         abort(400)
+
+    title = request.get_json().get('title', drink.title)
+    recipe = request.get_json().get('recipe', json.loads(drink.recipe))
 
     try:
         # Verify recipe works.  Do so in a try/catch in case of key errors
@@ -154,12 +159,12 @@ def modify_exiting_drink(drink_id):
             if piece['parts'] < 1:
                 abort(400)
         drink.title = title
-        drink.recipe = recipe
+        drink.recipe = json.dumps(recipe)
         drink.update()
         # We can get the id of the new_drink because it has been flushed.
         return jsonify({
             'success': True,
-            'id': new_drink.id,
+            'id': drink.id,
             'drinks': format_drinks_long([drink])
         })
     except:
@@ -177,7 +182,7 @@ def modify_exiting_drink(drink_id):
 '''
 @app.route('/drinks/<int:drink_id>', methods=['DELETE'])
 @requires_auth('delete:drinks')
-def delete_drink(drink_id):
+def delete_drink(payload, drink_id):
     drink_to_delete = Drink.query.get(drink_id)
     if not drink_to_delete:
         abort(404)
