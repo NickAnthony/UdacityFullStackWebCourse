@@ -92,15 +92,17 @@ def add_new_drink(payload):
     # Verify that the title and recipe exist
     if (not title or not recipe):
         abort(400)
+    # Verify recipe works.  Do so in a try/catch in case of key errors
+    for piece in recipe:
+        if not piece['name'] or not piece['parts'] or not piece['color']:
+            abort(400)
+        if piece['parts'] < 1:
+            abort(400)
+    # Ensure that the title is unique
+    if Drink.query.filter(Drink.title == title).one_or_none():
+        abort(400)
 
     try:
-        # Verify recipe works.  Do so in a try/catch in case of key errors
-        for piece in recipe:
-            if not piece['name'] or not piece['parts'] or not piece['color']:
-                abort(400)
-            if piece['parts'] < 1:
-                abort(400)
-
         new_drink = Drink(
             title = title,
             recipe = json.dumps(recipe)
