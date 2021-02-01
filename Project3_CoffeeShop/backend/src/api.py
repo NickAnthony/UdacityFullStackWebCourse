@@ -92,9 +92,9 @@ def add_new_drink(payload):
     # Verify that the title and recipe exist
     if (not title or not recipe):
         abort(400)
-    # Verify recipe works.  Do so in a try/catch in case of key errors
+    # Verify recipe works
     for piece in recipe:
-        if not piece['name'] or not piece['parts'] or not piece['color']:
+        if 'name' not in piece or 'parts' not in piece or 'color' not in piece:
             abort(400)
         if piece['parts'] < 1:
             abort(400)
@@ -138,12 +138,9 @@ def modify_exiting_drink(payload, drink_id):
     #     "parts": parts (number),
     #     "color": color (string)
     #   },]}
-    try:
-        drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
-        if not drink:
-            abort(404)
-    except:
-        abort(422)
+    drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+    if not drink:
+        abort(404)
 
     # Verify that either one of title and recipe exist
     if (not request.get_json().get('title') and
@@ -152,14 +149,14 @@ def modify_exiting_drink(payload, drink_id):
 
     title = request.get_json().get('title', drink.title)
     recipe = request.get_json().get('recipe', json.loads(drink.recipe))
+    # Verify recipe works
+    for piece in recipe:
+        if 'name' not in piece or 'parts' not in piece or 'color' not in piece:
+            abort(400)
+        if piece['parts'] < 1:
+            abort(400)
 
     try:
-        # Verify recipe works.  Do so in a try/catch in case of key errors
-        for piece in recipe:
-            if not piece['name'] or not piece['parts'] or not piece['color']:
-                abort(400)
-            if piece['parts'] < 1:
-                abort(400)
         drink.title = title
         drink.recipe = json.dumps(recipe)
         drink.update()
