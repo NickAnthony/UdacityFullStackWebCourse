@@ -182,7 +182,17 @@ def requires_auth(permission=''):
                 }), 401
             except:
                 abort(401)
-            check_permissions(permission, payload)
+            try:
+                check_permissions(permission, payload)
+            except AuthError as e:
+                return jsonify({
+                    "success": False,
+                    "error": e.error['code'],
+                    "code": e.status_code,
+                    "message": e.error['description'],
+                }), 401
+            except:
+                abort(401)
             return f(payload, *args, **kwargs)
 
         return wrapper
