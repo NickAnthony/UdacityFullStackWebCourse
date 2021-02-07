@@ -139,7 +139,7 @@ def add_new_drink(payload):
             'id': new_drink.id,
             'drinks': format_drinks_long([new_drink])
         })
-    except for Exception as e:
+    except Exception as e:
         abort(422)
 
 
@@ -200,7 +200,7 @@ def modify_exiting_drink(payload, drink_id):
             'id': drink.id,
             'drinks': format_drinks_long([drink])
         })
-    except for Exception as e:
+    except Exception as e:
         abort(422)
 
 
@@ -229,7 +229,7 @@ def delete_drink(payload, drink_id):
             'success': True,
             'delete': drink_to_delete_id
         })
-    except for Exception as e:
+    except Exception as e:
         abort(422)
 
 

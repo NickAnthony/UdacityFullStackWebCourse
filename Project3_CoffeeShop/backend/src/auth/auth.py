@@ -186,7 +186,7 @@ def requires_auth(permission=''):
                     "code": e.status_code,
                     "message": e.error['description'],
                 }), 401
-            except for Exception as e:
+            except Exception as e:
                 abort(401)
             try:
                 check_permissions(permission, payload)
@@ -197,7 +197,7 @@ def requires_auth(permission=''):
                     "code": e.status_code,
                     "message": e.error['description'],
                 }), 401
-            except for Exception as e:
+            except Exception as e:
                 abort(401)
             return f(payload, *args, **kwargs)
 
