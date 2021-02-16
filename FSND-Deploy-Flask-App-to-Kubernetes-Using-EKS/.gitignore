@@ -27,3 +27,7 @@ htmlcov/
 # Direnv
 .envrc
 .direnv
+
+# AWS Private Files
+iam-role-policy.json
+trust.json
